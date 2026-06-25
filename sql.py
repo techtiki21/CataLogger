@@ -2,8 +2,6 @@ import sqlite3
 from pathlib import Path
 import datetime
 
-db = None
-cursor = None
 
 def initDB():
     global db, cursor
@@ -27,8 +25,8 @@ def initDB():
             weight_kg REAL,
             activity_level INTEGER,
             appetite TEXT CHECK(appetite IN ('None', 'Normal', 'Low', 'High')),
-            water_intake TEXT CHECK(water_intake IN ('Normal', 'Decreased', 'Increased')),
-            litter_box TEXT CHECK(litter_box IN ('Normal', 'Straining', 'Diarrhea', 'Constipated')),
+            water_intake TEXT CHECK(water_intake IN ('None', 'Normal', 'Low', 'High')),
+            litter TEXT CHECK(litter IN ('Normal', 'Straining', 'Diarrhea', 'Constipated')),
             notes TEXT,
             FOREIGN KEY (cat_id) REFERENCES cats(id) ON DELETE CASCADE
         );
@@ -42,3 +40,16 @@ def addEntry(name, birth, breed):
         VALUES(?,?,?)
     ''', (name, birth, breed))
     db.commit()
+
+def log(cat, weight, active, appetite, water, litter, notes):
+    cursor.execute('''
+        INSERT INTO log (cat_id, weight_kg, activity_level, appetite, water_intake, litter, notes)
+        VALUES (?,?,?,?,?,?,?)
+    ''', (cat, weight, active, appetite, water, litter, notes))
+    db.commit()
+
+def fetchCat(name):
+    id = cursor.execute('''
+        SELECT id FROM cats WHERE name = ?
+    ''', (name,)).fetchone()
+    return id

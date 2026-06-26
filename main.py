@@ -22,6 +22,7 @@ def getFullOption(letter):
 @click.group()
 def main():
     """Catalogger: An AI-Powered Cat Health Logger"""
+    print("\n")
     sql.initDB()
     pass
 
@@ -70,6 +71,13 @@ def log(cat, weight, activity, appetite, water, litter, notes):
         else:
             print("Invalid option.")
             continue
+
+@main.command()
+def list_cats():
+    """List all cats stored in the database"""
+    cats = sql.listCats()
+    for cat in cats:
+        print(f"{cat[0]}: | Born: {cat[1]} | Breed: {cat[2]} | Entry Created: {cat[3]}")
 
 
 if __name__ == "__main__":

@@ -54,3 +54,9 @@ def fetchCat(name):
         SELECT id FROM cats WHERE name = ?
     ''', (name,)).fetchone()
     return id[0]
+
+def listCats():
+    cats = cursor.execute('''
+        SELECT name, birth_date, breed, created_at FROM cats
+    ''').fetchall()
+    return cats

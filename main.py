@@ -1,5 +1,6 @@
 import click
 import sql
+import analyze
 
 # extra functions
 def getFullOption(letter):
@@ -78,6 +79,12 @@ def list_cats():
     cats = sql.listCats()
     for cat in cats:
         print(f"{cat[0]}: | Born: {cat[1]} | Breed: {cat[2]} | Entry Created: {cat[3]}")
+
+@main.command()
+@click.option("--name", help="Name of the cat to analyze.")
+def overview(name):
+    """Use AI to provide a health overview of a specific cat"""
+    analyze.aiAnalysis(name)
 
 
 if __name__ == "__main__":

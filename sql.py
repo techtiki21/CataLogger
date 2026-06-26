@@ -53,10 +53,20 @@ def fetchCat(name):
     id = cursor.execute('''
         SELECT id FROM cats WHERE name = ?
     ''', (name,)).fetchone()
-    return id[0]
+    try:
+        return id[0]
+    except TypeError:
+        return "NoName"
 
 def listCats():
     cats = cursor.execute('''
         SELECT name, birth_date, breed, created_at FROM cats
     ''').fetchall()
     return cats
+
+def fetchLogs(cat_id):
+    logs = cursor.execute('''
+        SELECT weight_kg, activity_level, appetite, water_intake, litter, notes
+        FROM log WHERE cat_id = ?
+    ''', (cat_id,)).fetchall()
+    return logs

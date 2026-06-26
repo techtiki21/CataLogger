@@ -43,6 +43,7 @@ def add_entry(name, birth, breed):
 @click.option("--litter", help="(N)ormal, (S)training, (D)iarrhea, (C)onstipated")
 @click.option("--notes", help="Extra notes the AI can use to better its understanding of the cat.")
 def log(cat, weight, activity, appetite, water, litter, notes):
+    """Log metrics of a saved cat"""
     if activity > 5 or activity < 1:
         print("Bad activity level")
         return
@@ -57,6 +58,18 @@ def log(cat, weight, activity, appetite, water, litter, notes):
     print(f"Water Intake = {water}")
     print(f"Litter = {litter}")
     print(f"Notes = {notes}")
+    userInput = 'a'
+    while userInput != 'n' or userInput != 'y':
+        userInput = str(input("Confirm metrics? (y/n): "))
+        if userInput.lower() == 'y':
+            sql.log(sql.fetchCat(cat), cat, weight, activity, appetite, water, litter, notes)
+            print(f"Metrics for {cat} has been logged!")
+            break
+        elif userInput.lower() == 'n':
+            break
+        else:
+            print("Invalid option.")
+            continue
 
 
 if __name__ == "__main__":

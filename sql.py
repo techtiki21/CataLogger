@@ -22,6 +22,7 @@ def initDB():
         CREATE TABLE IF NOT EXISTS log(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             cat_id INTEGER NOT NULL,
+            name TEXT,
             weight_kg REAL,
             activity_level INTEGER,
             appetite TEXT CHECK(appetite IN ('None', 'Normal', 'Low', 'High')),
@@ -41,15 +42,15 @@ def addEntry(name, birth, breed):
     ''', (name, birth, breed))
     db.commit()
 
-def log(cat, weight, active, appetite, water, litter, notes):
+def log(id, cat, weight, active, appetite, water, litter, notes):
     cursor.execute('''
-        INSERT INTO log (cat_id, weight_kg, activity_level, appetite, water_intake, litter, notes)
-        VALUES (?,?,?,?,?,?,?)
-    ''', (cat, weight, active, appetite, water, litter, notes))
+        INSERT INTO log (cat_id, name, weight_kg, activity_level, appetite, water_intake, litter, notes)
+        VALUES (?,?,?,?,?,?,?,?)
+    ''', (id, cat, weight, active, appetite, water, litter, notes))
     db.commit()
 
 def fetchCat(name):
     id = cursor.execute('''
         SELECT id FROM cats WHERE name = ?
     ''', (name,)).fetchone()
-    return id
+    return id[0]

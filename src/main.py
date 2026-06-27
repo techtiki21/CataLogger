@@ -95,7 +95,7 @@ def list_cats():
         print(f"{cat[0]}: | Born: {cat[1]} | Breed: {cat[2]} | Entry Created: {cat[3]}")
 
 @main.command()
-@click.option("--cat", help="Name of the cat to analyze.")
+@click.option("--cat", required=True, help="Name of the cat to analyze.")
 def overview(cat):
     """Use AI to provide a health overview of a specific cat"""
     analyze.aiAnalysis(cat)

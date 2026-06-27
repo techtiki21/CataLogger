@@ -36,11 +36,16 @@ def initDB():
     db.commit()
 
 def addEntry(name, birth, breed):
-    cursor.execute('''
-        INSERT INTO cats (name, birth_date, breed)
-        VALUES(?,?,?)
-    ''', (name, birth, breed))
-    db.commit()
+    try:
+        cursor.execute('''
+            INSERT INTO cats (name, birth_date, breed)
+            VALUES(?,?,?)
+        ''', (name, birth, breed))
+        db.commit()
+        print(f"{name} added to database successfuly!")
+    except sqlite3.IntegrityError:
+        print("Entry already exists!")
+        return False
 
 def log(id, cat, weight, active, appetite, water, litter, notes):
     cursor.execute('''

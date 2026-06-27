@@ -34,10 +34,9 @@ def main():
 def add_entry(name, birth, breed):
     """Add a new cat to the database"""
     sql.addEntry(name, birth, breed)
-    print(f"{name} added to database successfuly!")
 
 @main.command()
-@click.option("--cat", required=True, help="Name or ID of the cat you want to log.")
+@click.option("--cat", help="Name or ID of the cat you want to log.")
 @click.option("--weight", help="Weight of the cat in kilograms.")
 @click.option("--activity", type=int, help="How active your cat is on a scale of 1-5.")
 @click.option("--appetite", help="None, (N)ormal, (L)ow, (H)igh")
@@ -46,6 +45,21 @@ def add_entry(name, birth, breed):
 @click.option("--notes", help="Extra notes the AI can use to better its understanding of the cat.")
 def log(cat, weight, activity, appetite, water, litter, notes):
     """Log metrics of a saved cat"""
+    if cat == None:
+        cat = input("Enter the name of the cat: ")
+    if weight == None:
+        weight = input("Enter the weight of the cat (kg): ")
+    if activity == None:
+        activity = int(input("Rate the activity level of the cat from 1-5: "))
+    if appetite == None:
+        appetite = input("How much appetite does the cat have; None, (N)ormal, (L)ow, (H)igh: ")
+    if water == None:
+        water = input("How much water does the cat take; None, (N)ormal, (L)ow, (H)igh: ")
+    if litter == None:
+        litter = input("What's the litter of the cat like; (N)ormal, (S)training, (D)iarrhea, (C)onstipated:")
+    if notes == None:
+        notes = input("Any extra notes you would like to add: ")
+
     if activity > 5 or activity < 1:
         print("Bad activity level")
         return
@@ -81,10 +95,10 @@ def list_cats():
         print(f"{cat[0]}: | Born: {cat[1]} | Breed: {cat[2]} | Entry Created: {cat[3]}")
 
 @main.command()
-@click.option("--name", help="Name of the cat to analyze.")
-def overview(name):
+@click.option("--cat", help="Name of the cat to analyze.")
+def overview(cat):
     """Use AI to provide a health overview of a specific cat"""
-    analyze.aiAnalysis(name)
+    analyze.aiAnalysis(cat)
 
 
 if __name__ == "__main__":

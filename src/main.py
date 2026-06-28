@@ -1,3 +1,4 @@
+from datetime import datetime
 import click
 import sql
 import analyze
@@ -109,10 +110,13 @@ def history(cat):
 def graph(cat):
     """Graph the weight of a cat over time"""
     log = sql.metricLog(cat)
+    dates = []
     weights = []
-    for weight in log:
-        weights.append(weight[1])
+    for l in log:
+        weights.append(l[1])
+        dates.append(datetime.strptime(l[7], "%Y-%m-%d %H:%M:%S").strftime("%d/%m/%Y"))
     plt.plot(weights)
+    plt.xticks(range(len(dates)), dates)
     plt.title(f"{cat}'s Weight Over Time")
     plt.ylabel("kg")
     plt.show()

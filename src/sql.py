@@ -71,6 +71,13 @@ def listCats():
     return cats
 
 def metricLog(cat):
+    if cat == None:
+       log = cursor.execute('''
+            SELECT id, weight_kg, activity_level, appetite, water_intake, litter, notes, created_at, name
+            FROM log
+            ''').fetchall()
+       return log
+        
     log = cursor.execute('''
         SELECT id, weight_kg, activity_level, appetite, water_intake, litter, notes, created_at
         FROM log WHERE name = ?

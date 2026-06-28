@@ -97,13 +97,18 @@ def list_cats():
         print(f"{cat[0]}: | Born: {cat[1]} | Breed: {cat[2]} | Entry Created: {cat[3]}")
 
 @main.command()
-@click.option("--cat", required=True, help="Show metrics of a specific cat.")
+@click.option("--cat", help="Show metrics of a specific cat.")
 def history(cat):
-    """"Show metrics of a specific cat."""
+    """"Show metrics of all cats or a specific cat."""
     log = sql.metricLog(cat)
-    print(f"Metrics for {cat}:")
-    for l in log:
-        print(f"Logged at: {l[7]} | Weight: {l[1]}kg | Activity: {l[2]} | Appetite: {l[3]} | Water: {l[4]} | Litter: {l[5]} | ID: {l[0]}")
+    if cat == None:
+        print("All saved metrics")
+        for l in log:
+            print(f"Cat: {l[8]} | Logged at: {l[7]} | Weight: {l[1]}kg | Activity: {l[2]} | Appetite: {l[3]} | Water: {l[4]} | Litter: {l[5]} | ID: {l[0]}")
+    else:
+        print(f"Metrics for {cat}:")
+        for l in log:
+            print(f"Logged at: {l[7]} | Weight: {l[1]}kg | Activity: {l[2]} | Appetite: {l[3]} | Water: {l[4]} | Litter: {l[5]} | ID: {l[0]}")
 
 @main.command()
 @click.option("--cat", required=True, help="Graph the weight of a cat over time")

@@ -44,6 +44,7 @@ When the user wants an AI-generated health overview using the `overview` command
 ## Features
 
 * Contains a `log` command, which takes in arguments directly from the terminal, or prompts the user for them if some values are not given.
+* Look back at how much your cats have changed with the `history` command and visualize it with `graph`.
 * An `overview` can be provided of a specific cat, using Llama 3.3 to analyze the `.db`.
 
 ## Usage
@@ -79,6 +80,24 @@ Log health metrics of a specific cat.
 ### `list-cats`
 
 Prints out all cats currently stored in the database alongside their birth dates and breeds.
+
+### `history`
+
+Show metrics of all cats or a specific cat.
+
+
+| Arguments | Explanation                                         | Required |
+| --------- | --------------------------------------------------- | -------- |
+| `--cat`   | If not provided, all saved metrics will be returned | NO       |
+
+### `graph`
+
+Create a graph of your cat's weight over time
+
+
+| Arguments | Explanation                               | Required |
+| --------- | ----------------------------------------- | -------- |
+| `--cat`   | Choose a cat whose weight will be graphed | YES      |
 
 ### `overview`
 

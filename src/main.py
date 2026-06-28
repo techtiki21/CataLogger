@@ -1,6 +1,7 @@
 import click
 import sql
 import analyze
+import plotext as plt
 
 # extra functions
 def getFullOption(letter):
@@ -102,6 +103,19 @@ def history(cat):
     print(f"Metrics for {cat}:")
     for l in log:
         print(f"Logged at: {l[7]} | Weight: {l[1]}kg | Activity: {l[2]} | Appetite: {l[3]} | Water: {l[4]} | Litter: {l[5]} | ID: {l[0]}")
+
+@main.command()
+@click.option("--cat", required=True, help="Graph the weight of a cat over time")
+def graph(cat):
+    """Graph the weight of a cat over time"""
+    log = sql.metricLog(cat)
+    weights = []
+    for weight in log:
+        weights.append(weight[1])
+    plt.plot(weights)
+    plt.title(f"{cat}'s Weight Over Time")
+    plt.ylabel("kg")
+    plt.show()
 
 @main.command()
 @click.option("--cat", required=True, help="Name of the cat to analyze.")

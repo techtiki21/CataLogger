@@ -10,16 +10,18 @@ def getFullOption(letter):
         return letter
     if letter.upper() == "L":
         return "Low"
-    elif letter.upper() == "N":
+    if letter.upper() == "N":
         return "Normal"
-    elif letter.upper() == "H":
+    if letter.upper() == "H":
         return "High"
-    elif letter.upper() == "S":
+    if letter.upper() == "S":
         return "Straining"
-    elif letter.upper() == "D":
+    if letter.upper() == "D":
         return "Diarrhea"
     if letter.upper() == "C":
         return "Constipated"
+    if letter.upper() in ("NA", "N/A"):
+        return "N/A"
 
 
 @click.group()
@@ -47,29 +49,50 @@ def add_entry(name, birth, breed):
 @click.option("--notes", help="Extra notes the AI can use to better its understanding of the cat.")
 def log(cat, weight, activity, appetite, water, litter, notes):
     """Log metrics of a saved cat"""
-    if cat == None:
+    while cat == None:
         cat = input("Enter the name of the cat: ")
-    if weight == None:
-        weight = input("Enter the weight of the cat (kg): ")
-    if activity == None:
+        if sql.fetchCat(cat) == "NoName":
+            print("That cat does not exist.")
+            cat = None
+    while weight == None:
+        try:
+            weight = float(input("Enter the weight of the cat (kg): "))
+        except ValueError:
+            print("Must be a number")
+            weight = None
+    while activity == None:
         activity = int(input("Rate the activity level of the cat from 1-5: "))
-    if appetite == None:
-        appetite = input("How much appetite does the cat have; None, (N)ormal, (L)ow, (H)igh: ")
-    if water == None:
-        water = input("How much water does the cat take; None, (N)ormal, (L)ow, (H)igh: ")
-    if litter == None:
-        litter = input("What's the litter of the cat like; (N)ormal, (S)training, (D)iarrhea, (C)onstipated:")
+        if activity > 5 or activity < 1:
+            print("Bad activity level")
+            activity = None
+    while appetite == None:
+        appetite = input("How much appetite does the cat have; None, (N)ormal, (L)ow, (H)igh, (N/A): ")
+        if appetite.upper() not in ("NONE", "N", "L", "H", "N/A", "NA"):
+            print("Not a valid appetite type")
+            appetite = None
+    while water == None:
+        water = input("How much water does the cat take; None, (N)ormal, (L)ow, (H)igh, (N/A): ")
+        if water.upper() not in ("NONE", "N", "L", "H", "N/A", "NA"):
+            print("Not a valid water intake type")
+            water = None
+    while litter == None:
+        litter = input("What's the litter of the cat like; (N)ormal, (S)training, (D)iarrhea, (C)onstipated, (N/A):")
+        if litter.upper() not in ("N", "S", "D", "C", "N/A", "NA"):
+            print("Not a valid litter type")
+            litter = None
     if notes == None:
-        notes = input("Any extra notes you would like to add: ")
+        notes = input("Any extra notes you would like to add (blank to leave empty): ")
 
     if activity > 5 or activity < 1:
         print("Bad activity level")
         return
+    if sql.fetchCat(cat) == "NoName":
+        print("That cat does not exist.")
     appetite = getFullOption(appetite)
     water = getFullOption(water)
     litter = getFullOption(litter)
     
-    print(f"Cat = {cat}/{sql.fetchCat(cat)}")
+    print(f"Cat = {cat} | ID: {sql.fetchCat(cat)}")
     print(f"Weight = {weight}kg")
     print(f"Activity = {activity}")
     print(f"Appetite = {appetite}")

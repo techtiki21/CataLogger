@@ -26,9 +26,9 @@ def initDB():
             name TEXT,
             weight_kg REAL,
             activity_level INTEGER,
-            appetite TEXT CHECK(appetite IN ('None', 'Normal', 'Low', 'High')),
-            water_intake TEXT CHECK(water_intake IN ('None', 'Normal', 'Low', 'High')),
-            litter TEXT CHECK(litter IN ('Normal', 'Straining', 'Diarrhea', 'Constipated')),
+            appetite TEXT CHECK(appetite IN ("None", "Normal", "Low", "High", "N/A")),
+            water_intake TEXT CHECK(water_intake IN ("None", "Normal", "Low", "High", "N/A")),
+            litter TEXT CHECK(litter IN ("Normal", "Straining", "Diarrhea", "Constipated", "N/A")),
             notes TEXT,
             FOREIGN KEY (cat_id) REFERENCES cats(id) ON DELETE CASCADE
         );

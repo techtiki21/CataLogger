@@ -1,6 +1,8 @@
+from datetime import datetime
 import click
 import sql
 import analyze
+import plotext as plt
 
 # extra functions
 def getFullOption(letter):
@@ -93,6 +95,36 @@ def list_cats():
     cats = sql.listCats()
     for cat in cats:
         print(f"{cat[0]}: | Born: {cat[1]} | Breed: {cat[2]} | Entry Created: {cat[3]}")
+
+@main.command()
+@click.option("--cat", help="Show metrics of a specific cat.")
+def history(cat):
+    """"Show metrics of all cats or a specific cat."""
+    log = sql.metricLog(cat)
+    if cat == None:
+        print("All saved metrics")
+        for l in log:
+            print(f"Cat: {l[8]} | Logged at: {l[7]} | Weight: {l[1]}kg | Activity: {l[2]} | Appetite: {l[3]} | Water: {l[4]} | Litter: {l[5]} | ID: {l[0]}")
+    else:
+        print(f"Metrics for {cat}:")
+        for l in log:
+            print(f"Logged at: {l[7]} | Weight: {l[1]}kg | Activity: {l[2]} | Appetite: {l[3]} | Water: {l[4]} | Litter: {l[5]} | ID: {l[0]}")
+
+@main.command()
+@click.option("--cat", required=True, help="Graph the weight of a cat over time")
+def graph(cat):
+    """Graph the weight of a cat over time"""
+    log = sql.metricLog(cat)
+    dates = []
+    weights = []
+    for l in log:
+        weights.append(l[1])
+        dates.append(datetime.strptime(l[7], "%Y-%m-%d %H:%M:%S").strftime("%d/%m/%Y"))
+    plt.plot(weights)
+    plt.xticks(range(len(dates)), dates)
+    plt.title(f"{cat}'s Weight Over Time")
+    plt.ylabel("kg")
+    plt.show()
 
 @main.command()
 @click.option("--cat", required=True, help="Name of the cat to analyze.")

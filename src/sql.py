@@ -22,6 +22,7 @@ def initDB():
         CREATE TABLE IF NOT EXISTS log(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             cat_id INTEGER NOT NULL,
+            created_at TEXT DEFAULT (datetime('now', 'localtime')),
             name TEXT,
             weight_kg REAL,
             activity_level INTEGER,
@@ -68,6 +69,20 @@ def listCats():
         SELECT name, birth_date, breed, created_at FROM cats
     ''').fetchall()
     return cats
+
+def metricLog(cat):
+    if cat == None:
+        log = cursor.execute('''
+            SELECT id, weight_kg, activity_level, appetite, water_intake, litter, notes, created_at, name
+            FROM log
+            ''').fetchall()
+        return log
+        
+    log = cursor.execute('''
+        SELECT id, weight_kg, activity_level, appetite, water_intake, litter, notes, created_at
+        FROM log WHERE name = ?
+    ''', (cat, )).fetchall()
+    return log
 
 def fetchLogs(cat_id):
     logs = cursor.execute('''

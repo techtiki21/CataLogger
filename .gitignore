@@ -1,3 +1,4 @@
 /__pycache__
 cat-a-log.db
 .env
+**/__pycache__/

@@ -91,7 +91,7 @@ def fetchLogs(cat_id):
     ''', (cat_id,)).fetchall()
     return logs
 
-def delete(table, id, cat="NoName"):
+def delete(table, id):
     if table == "cats":
         cursor.execute('''
             DELETE FROM cats
@@ -100,7 +100,9 @@ def delete(table, id, cat="NoName"):
     elif table == "log":
         cursor.execute('''
             DELETE FROM log
-            WHERE cat_id = ? AND id = ?
-        ''', (fetchCat(cat.lower()), id))
+            WHERE id = ?
+        ''', (id, ))
     else:
         print("Select a table")
+        return
+    db.commit()

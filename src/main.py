@@ -174,7 +174,7 @@ def overview(cat):
 
 @main.command()
 @click.option("--mode", type=click.Choice(["cats", "cat", "logs", "log"], case_sensitive=False), required=True, help="Clear an entry from saved cats or a log")
-@click.option("--cat", required=True, help="Cat whose log you want to clear or clear the cat itself from the database")
+@click.option("--cat", help="Choose a cat to clear from the database")
 @click.option("--id", type=int, help="ID of the row you want to clear")
 def delete(mode):
     pass

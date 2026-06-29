@@ -90,3 +90,17 @@ def fetchLogs(cat_id):
         FROM log WHERE cat_id = ?
     ''', (cat_id,)).fetchall()
     return logs
+
+def delete(table, id, cat="NoName"):
+    if table == "cats":
+        cursor.execute('''
+            DELETE FROM cats
+            WHERE id = ?
+        ''', (id, ))
+    elif table == "log":
+        cursor.execute('''
+            DELETE FROM log
+            WHERE cat_id = ? AND id = ?
+        ''', (fetchCat(cat.lower()), id))
+    else:
+        print("Select a table")

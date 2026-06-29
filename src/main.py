@@ -49,9 +49,9 @@ def add_entry(name, birth, breed):
 @click.option("--cat", help="Name or ID of the cat you want to log.")
 @click.option("--weight", type=float, help="Weight of the cat in kilograms.")
 @click.option("--activity", type=click.IntRange(1, 5), help="How active your cat is on a scale of 1-5.")
-@click.option("--appetite", help="None, (N)ormal, (L)ow, (H)igh")
-@click.option("--water", help="None, (N)ormal, (L)ow, (H)igh")
-@click.option("--litter", help="(N)ormal, (S)training, (D)iarrhea, (C)onstipated")
+@click.option("--appetite", type=click.Choice(["None", "N", "L", "H", "N/A", "NA"], case_sensitive=False), help="None, (N)ormal, (L)ow, (H)igh")
+@click.option("--water", type=click.Choice(["None", "N", "L", "H", "N/A", "NA"], case_sensitive=False), help="None, (N)ormal, (L)ow, (H)igh")
+@click.option("--litter", type=click.Choice(["None", "N", "S", "D", "C", "N/A", "NA"], case_sensitive=False), help="(N)ormal, (S)training, (D)iarrhea, (C)onstipated")
 @click.option("--notes", help="Extra notes the AI can use to better its understanding of the cat.")
 def log(cat, weight, activity, appetite, water, litter, notes):
     """Log metrics of a saved cat"""
@@ -171,6 +171,13 @@ def graph(cat):
 def overview(cat):
     """Use AI to provide a health overview of a specific cat"""
     analyze.aiAnalysis(cat)
+
+@main.command()
+@click.option("--mode", type=click.Choice(["cats", "cat", "logs", "log"], case_sensitive=False), required=True, help="Clear an entry from saved cats or a log")
+@click.option("--cat", required=True, help="Cat whose log you want to clear or clear the cat itself from the database")
+@click.option("--id", type=int, help="ID of the row you want to clear")
+def delete(mode):
+    pass
 
 
 if __name__ == "__main__":

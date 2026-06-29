@@ -77,12 +77,12 @@ def metricLog(cat):
             FROM log
             ''').fetchall()
         return log
-        
-    log = cursor.execute('''
-        SELECT id, weight_kg, activity_level, appetite, water_intake, litter, notes, created_at
-        FROM log WHERE name = ?
-    ''', (cat, )).fetchall()
-    return log
+    else:
+        log = cursor.execute('''
+            SELECT id, weight_kg, activity_level, appetite, water_intake, litter, notes, created_at
+            FROM log WHERE name = ?
+        ''', (cat, )).fetchall()
+        return log
 
 def fetchLogs(cat_id):
     logs = cursor.execute('''

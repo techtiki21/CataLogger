@@ -108,4 +108,4 @@ Uses AI to create a health overview by checking the logged metrics of the cat yo
 
 | Arguments | Explanation                                       | Required |
 | --------- | ------------------------------------------------- | -------- |
-| `--cat`   | The cat you want the AI to provide an overview on | NO       |
+| `--cat`   | The cat you want the AI to provide an overview on | YES      |

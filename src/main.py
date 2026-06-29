@@ -37,12 +37,18 @@ def main():
 @click.option("--breed", help="Breed of your cat.")
 def add_entry(name, birth, breed):
     """Add a new cat to the database"""
-    sql.addEntry(name, birth, breed)
+    if birth:
+        try:
+            datetime.strptime(birth, "%Y-%m-%d")
+        except ValueError:
+            print("Invalid date format. Please use YYYY-MM-DD.")
+            return
+    sql.addEntry(name.lower(), birth, breed)
 
 @main.command()
 @click.option("--cat", help="Name or ID of the cat you want to log.")
-@click.option("--weight", help="Weight of the cat in kilograms.")
-@click.option("--activity", type=int, help="How active your cat is on a scale of 1-5.")
+@click.option("--weight", type=float, help="Weight of the cat in kilograms.")
+@click.option("--activity", type=click.IntRange(1, 5), help="How active your cat is on a scale of 1-5.")
 @click.option("--appetite", help="None, (N)ormal, (L)ow, (H)igh")
 @click.option("--water", help="None, (N)ormal, (L)ow, (H)igh")
 @click.option("--litter", help="(N)ormal, (S)training, (D)iarrhea, (C)onstipated")
@@ -51,7 +57,7 @@ def log(cat, weight, activity, appetite, water, litter, notes):
     """Log metrics of a saved cat"""
     while cat == None:
         cat = input("Enter the name of the cat: ")
-        if sql.fetchCat(cat) == "NoName":
+        if sql.fetchCat(cat.lower()) == "NoName":
             print("That cat does not exist.")
             cat = None
     while weight == None:
@@ -61,7 +67,10 @@ def log(cat, weight, activity, appetite, water, litter, notes):
             print("Must be a number")
             weight = None
     while activity == None:
-        activity = int(input("Rate the activity level of the cat from 1-5: "))
+        try:
+            activity = int(input("Rate the activity level of the cat from 1-5: "))
+        except ValueError:
+            activity = 0
         if activity > 5 or activity < 1:
             print("Bad activity level")
             activity = None
@@ -88,11 +97,12 @@ def log(cat, weight, activity, appetite, water, litter, notes):
         return
     if sql.fetchCat(cat) == "NoName":
         print("That cat does not exist.")
+        return
     appetite = getFullOption(appetite)
     water = getFullOption(water)
     litter = getFullOption(litter)
     
-    print(f"Cat = {cat} | ID: {sql.fetchCat(cat)}")
+    print(f"Cat = {cat} | ID: {sql.fetchCat(cat.lower())}")
     print(f"Weight = {weight}kg")
     print(f"Activity = {activity}")
     print(f"Appetite = {appetite}")
@@ -103,7 +113,7 @@ def log(cat, weight, activity, appetite, water, litter, notes):
     while userInput != 'n' or userInput != 'y':
         userInput = str(input("Confirm metrics? (y/n): "))
         if userInput.lower() == 'y':
-            sql.log(sql.fetchCat(cat), cat, weight, activity, appetite, water, litter, notes)
+            sql.log(sql.fetchCat(cat), cat.lower(), weight, activity, appetite, water, litter, notes)
             print(f"Metrics for {cat} has been logged!")
             break
         elif userInput.lower() == 'n':
@@ -129,6 +139,7 @@ def history(cat):
         for l in log:
             print(f"Cat: {l[8]} | Logged at: {l[7]} | Weight: {l[1]}kg | Activity: {l[2]} | Appetite: {l[3]} | Water: {l[4]} | Litter: {l[5]} | ID: {l[0]}")
     else:
+        log = sql.metricLog(cat.lower())
         print(f"Metrics for {cat}:")
         for l in log:
             print(f"Logged at: {l[7]} | Weight: {l[1]}kg | Activity: {l[2]} | Appetite: {l[3]} | Water: {l[4]} | Litter: {l[5]} | ID: {l[0]}")
@@ -137,12 +148,18 @@ def history(cat):
 @click.option("--cat", required=True, help="Graph the weight of a cat over time")
 def graph(cat):
     """Graph the weight of a cat over time"""
-    log = sql.metricLog(cat)
+    if sql.fetchCat(cat.lower()) == "NoName":
+        print("That cat does not exist.")
+        return
+    log = sql.metricLog(cat.lower())
     dates = []
     weights = []
     for l in log:
         weights.append(l[1])
         dates.append(datetime.strptime(l[7], "%Y-%m-%d %H:%M:%S").strftime("%d/%m/%Y"))
+    if weights == []:
+        print(f"No weights logged for {cat}.")
+        return
     plt.plot(weights)
     plt.xticks(range(len(dates)), dates)
     plt.title(f"{cat}'s Weight Over Time")

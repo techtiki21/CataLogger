@@ -11,7 +11,7 @@ def aiAnalysis(cat_name):
         print("This cat does not exist. Check for any misspellings.")
         return
     
-    logs = sql.fetchLogs(cat_id)
+    logs = sql.AIfetchLogs(cat_id)
 
     log_text = "Weight | Activity | Appetite | Water | Litter | Notes\n"
     for row in logs:

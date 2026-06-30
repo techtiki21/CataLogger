@@ -34,6 +34,7 @@ def initDB():
         );
 
     ''')
+    cursor.execute("PRAGMA foreign_keys = ON")
     db.commit()
 
 def addEntry(name, birth, breed):
@@ -77,12 +78,12 @@ def queryCat(id):
     ''', (id, )).fetchall()
     return cat
 
-def queryCatByName(name):
-    cat = cursor.execute('''
-        SELECT name, birth_date, breed, created_at, ID FROM cats
-        WHERE name = ?
-    ''', (name, )).fetchall()
-    return cat
+def queryLog(id):
+    log = cursor.execute('''
+        SELECT id, weight_kg, activity_level, appetite, water_intake, litter, notes, created_at, name
+        FROM log WHERE id = ?
+    ''', (id, )).fetchall()
+    return log
 
 def metricLog(cat):
     if cat == None:
@@ -98,7 +99,7 @@ def metricLog(cat):
         ''', (cat, )).fetchall()
         return log
 
-def fetchLogs(cat_id):
+def AIfetchLogs(cat_id):
     logs = cursor.execute('''
         SELECT weight_kg, activity_level, appetite, water_intake, litter, notes
         FROM log WHERE cat_id = ?

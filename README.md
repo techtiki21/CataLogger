@@ -53,12 +53,11 @@ When the user wants an AI-generated health overview using the `overview` command
 
 Add one of your feline companions to your local database.
 
-
-| Arguments | Explanation                                            | Required |
-| :-------: | ------------------------------------------------------ | -------- |
-| `--name` | Name of the cat you want to add                        | YES      |
-| `--birth` | When your cat was born (Best formatted as`YYYY-MM-DD`) | NO       |
-| `--breed` | Breed of your cat                                      | NO       |
+|  Arguments  | Explanation                                               | Required |
+| :---------: | --------------------------------------------------------- | -------- |
+| `--name` | Name of the cat you want to add                           | YES      |
+| `--birth` | When your cat was born (Best formatted as `YYYY-MM-DD`) | NO       |
+| `--breed` | Breed of your cat                                         | NO       |
 
 ### `log`
 
@@ -66,15 +65,14 @@ Log health metrics of a specific cat.
 
 *(If an argument is not provided when the command is initially run, the CLI will prompt you to insert it via an `input` box.)*
 
-
-| Arguments    | Explanation                                                                           | Required |
-| ------------ | ------------------------------------------------------------------------------------- | -------- |
+| Arguments      | Explanation                                                                           | Required |
+| -------------- | ------------------------------------------------------------------------------------- | -------- |
 | `--cat`      | Name of the cat you want to log (case-sensitive)                                      | NO       |
 | `--weight`   | Current weight of the cat in kilograms                                                | NO       |
 | `--activity` | How active the cat is on a scale of 1-5                                               | NO       |
-| `--appetite` | How hungry is the cat:`None, (N)ormal, (L)ow, (H)igh`                                | NO       |
-| `--water`    | How much water does the cat drink:`None, (N)ormal, (L)ow, (H)igh`                    | NO       |
-| `--litter`   | Litter of the cat:`(N)ormal, (S)training, (D)iarrhea, (C)onstipated`                 | NO       |
+| `--appetite` | How hungry is the cat:`None, (N)ormal, (L)ow, (H)igh`                              | NO       |
+| `--water`    | How much water does the cat drink:`None, (N)ormal, (L)ow, (H)igh`                  | NO       |
+| `--litter`   | Litter of the cat:`(N)ormal, (S)training, (D)iarrhea, (C)onstipated`               | NO       |
 | `--notes`    | Extra notes the AI can use to better its understanding of the cat's current situation | NO       |
 
 ### `list-cats`
@@ -85,19 +83,26 @@ Prints out all cats currently stored in the database alongside their birth dates
 
 Show metrics of all cats or a specific cat.
 
-
 | Arguments | Explanation                                         | Required |
 | --------- | --------------------------------------------------- | -------- |
-| `--cat`   | If not provided, all saved metrics will be returned | NO       |
+| `--cat` | If not provided, all saved metrics will be returned | NO       |
 
 ### `graph`
 
 Create a graph of your cat's weight over time
 
-
 | Arguments | Explanation                               | Required |
 | --------- | ----------------------------------------- | -------- |
-| `--cat`   | Choose a cat whose weight will be graphed | YES      |
+| `--cat` | Choose a cat whose weight will be graphed | YES      |
+
+### `delete`
+
+Deleta an entry of a cat or a log.
+
+| Arguments  | Explanation                                                                                                     | Required |
+| ---------- | --------------------------------------------------------------------------------------------------------------- | -------- |
+| `--mode` | Delete an entry from the `cats` table or the `log` table<br />Accepted arguments: `cat, cats, log, logs ` | YES      |
+| `--id`   | Select a row ID to delete. If not provided, possible options will be displayed with their ID's                  | NO       |
 
 ### `overview`
 
@@ -105,7 +110,6 @@ Uses AI to create a health overview by checking the logged metrics of the cat yo
 
 *(The AI can make mistakes, so contact a certified veterinarian before acting upon things the AI has said to do)*
 
-
 | Arguments | Explanation                                       | Required |
 | --------- | ------------------------------------------------- | -------- |
-| `--cat`   | The cat you want the AI to provide an overview on | YES      |
+| `--cat` | The cat you want the AI to provide an overview on | YES      |

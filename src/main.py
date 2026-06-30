@@ -127,7 +127,7 @@ def list_cats():
     """List all cats stored in the database"""
     cats = sql.listCats()
     for cat in cats:
-        print(f"{cat[0]}: | Born: {cat[1]} | Breed: {cat[2]} | Entry Created: {cat[3]}")
+        print(f"{cat[0]}: | Born: {cat[1]} | Breed: {cat[2]} | Entry Created: {cat[3]} | ID: {cat[4]}")
 
 @main.command()
 @click.option("--cat", help="Show metrics of a specific cat.")
@@ -174,11 +174,42 @@ def overview(cat):
 
 @main.command()
 @click.option("--mode", type=click.Choice(["cats", "cat", "logs", "log"], case_sensitive=False), required=True, help="Clear an entry from saved cats or a log")
-@click.option("--cat", help="Choose a cat to clear from the database")
 @click.option("--id", type=int, help="ID of the row you want to clear")
-def delete(mode):
-    pass
-
+def delete(mode, id):
+    selectedCat = []
+    if mode.lower() == "cat" or "cats":
+        if id == None:
+            print("Saved Cats:")
+            cats = sql.listCats()
+            for cat in cats:
+                print(f"{cat[0]}: | Born: {cat[1]} | Breed: {cat[2]} | Entry Created: {cat[3]} | ID: {cat[4]}")
+            print("\n")
+            try:
+                id = int(input("Select the cat's ID: "))
+            except ValueError:
+                print("Not an integer.")
+                return
+            
+        selectedCat = sql.queryCat(id)
+        print("\n")
+        if selectedCat == []:
+            print("No cats match that ID.")
+            return
+        for cat in selectedCat:
+            print(f"{cat[0]}: | Born: {cat[1]} | Breed: {cat[2]} | Entry Created: {cat[3]} | ID: {cat[4]}")
+        userConfirm = "a"
+        while userConfirm.lower() != "y" or userConfirm.lower() != "n":
+            userConfirm = input("Is this the cat you want to delete (Y/N): ")
+            if userConfirm.lower() == "y":
+                sql.delete("cats", id)
+                print("Cat has been deleted successfuly!")
+                return
+            elif userConfirm.lower() == "n":
+                break
+                return
+            else:
+                print("Invalid choice.")
+                continue
 
 if __name__ == "__main__":
     main()

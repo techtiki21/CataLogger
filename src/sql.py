@@ -66,9 +66,23 @@ def fetchCat(name):
 
 def listCats():
     cats = cursor.execute('''
-        SELECT name, birth_date, breed, created_at FROM cats
+        SELECT name, birth_date, breed, created_at, ID FROM cats
     ''').fetchall()
     return cats
+
+def queryCat(id):
+    cat = cursor.execute('''
+        SELECT name, birth_date, breed, created_at, ID FROM cats
+        WHERE id = ?
+    ''', (id, )).fetchall()
+    return cat
+
+def queryCatByName(name):
+    cat = cursor.execute('''
+        SELECT name, birth_date, breed, created_at, ID FROM cats
+        WHERE name = ?
+    ''', (name, )).fetchall()
+    return cat
 
 def metricLog(cat):
     if cat == None:

@@ -34,6 +34,7 @@ def initDB():
         );
 
     ''')
+    cursor.execute("PRAGMA foreign_keys = ON")
     db.commit()
 
 def addEntry(name, birth, breed):
@@ -66,9 +67,23 @@ def fetchCat(name):
 
 def listCats():
     cats = cursor.execute('''
-        SELECT name, birth_date, breed, created_at FROM cats
+        SELECT name, birth_date, breed, created_at, ID FROM cats
     ''').fetchall()
     return cats
+
+def queryCat(id):
+    cat = cursor.execute('''
+        SELECT name, birth_date, breed, created_at, ID FROM cats
+        WHERE id = ?
+    ''', (id, )).fetchall()
+    return cat
+
+def queryLog(id):
+    log = cursor.execute('''
+        SELECT id, weight_kg, activity_level, appetite, water_intake, litter, notes, created_at, name
+        FROM log WHERE id = ?
+    ''', (id, )).fetchall()
+    return log
 
 def metricLog(cat):
     if cat == None:
@@ -84,9 +99,25 @@ def metricLog(cat):
         ''', (cat, )).fetchall()
         return log
 
-def fetchLogs(cat_id):
+def AIfetchLogs(cat_id):
     logs = cursor.execute('''
         SELECT weight_kg, activity_level, appetite, water_intake, litter, notes
         FROM log WHERE cat_id = ?
     ''', (cat_id,)).fetchall()
     return logs
+
+def delete(table, id):
+    if table == "cats":
+        cursor.execute('''
+            DELETE FROM cats
+            WHERE id = ?
+        ''', (id, ))
+    elif table == "log":
+        cursor.execute('''
+            DELETE FROM log
+            WHERE id = ?
+        ''', (id, ))
+    else:
+        print("Select a table")
+        return
+    db.commit()

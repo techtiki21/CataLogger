@@ -49,9 +49,9 @@ def add_entry(name, birth, breed):
 @click.option("--cat", help="Name or ID of the cat you want to log.")
 @click.option("--weight", type=float, help="Weight of the cat in kilograms.")
 @click.option("--activity", type=click.IntRange(1, 5), help="How active your cat is on a scale of 1-5.")
-@click.option("--appetite", help="None, (N)ormal, (L)ow, (H)igh")
-@click.option("--water", help="None, (N)ormal, (L)ow, (H)igh")
-@click.option("--litter", help="(N)ormal, (S)training, (D)iarrhea, (C)onstipated")
+@click.option("--appetite", type=click.Choice(["None", "N", "L", "H", "N/A", "NA"], case_sensitive=False), help="None, (N)ormal, (L)ow, (H)igh")
+@click.option("--water", type=click.Choice(["None", "N", "L", "H", "N/A", "NA"], case_sensitive=False), help="None, (N)ormal, (L)ow, (H)igh")
+@click.option("--litter", type=click.Choice(["None", "N", "S", "D", "C", "N/A", "NA"], case_sensitive=False), help="(N)ormal, (S)training, (D)iarrhea, (C)onstipated")
 @click.option("--notes", help="Extra notes the AI can use to better its understanding of the cat.")
 def log(cat, weight, activity, appetite, water, litter, notes):
     """Log metrics of a saved cat"""
@@ -127,12 +127,12 @@ def list_cats():
     """List all cats stored in the database"""
     cats = sql.listCats()
     for cat in cats:
-        print(f"{cat[0]}: | Born: {cat[1]} | Breed: {cat[2]} | Entry Created: {cat[3]}")
+        print(f"{cat[0]}: | Born: {cat[1]} | Breed: {cat[2]} | Entry Created: {cat[3]} | ID: {cat[4]}")
 
 @main.command()
 @click.option("--cat", help="Show metrics of a specific cat.")
 def history(cat):
-    """"Show metrics of all cats or a specific cat."""
+    """Show metrics of all cats or a specific cat"""
     log = sql.metricLog(cat)
     if cat == None:
         print("All saved metrics")
@@ -172,6 +172,81 @@ def overview(cat):
     """Use AI to provide a health overview of a specific cat"""
     analyze.aiAnalysis(cat)
 
+@main.command()
+@click.option("--mode", type=click.Choice(["cats", "cat", "logs", "log"], case_sensitive=False), required=True, help="Clear an entry from saved cats or a log")
+@click.option("--id", type=int, help="ID of the row you want to clear")
+def delete(mode, id):
+    """Delete a cat entry or remove a log from the database permenantly"""
+    selectedCat = []
+    if mode.lower() == "cat" or mode.lower() == "cats":
+        if id == None:
+            print("Saved Cats:")
+            cats = sql.listCats()
+            if cats == []:
+                print("No cats to delete.")
+                return
+            for cat in cats:
+                print(f"{cat[0]}: | Born: {cat[1]} | Breed: {cat[2]} | Entry Created: {cat[3]} | ID: {cat[4]}")
+            print("\n")
+            try:
+                id = int(input("Select the cat's ID: "))
+            except ValueError:
+                print("Not an integer.")
+                return
+        selectedCat = sql.queryCat(id)
+        print("\n")
+        if selectedCat == []:
+            print("No cats match that ID.")
+            return
+        for cat in selectedCat:
+            print(f"{cat[0]}: | Born: {cat[1]} | Breed: {cat[2]} | Entry Created: {cat[3]} | ID: {cat[4]}")
+        userConfirm = "a"
+        while userConfirm.lower() != "y" or userConfirm.lower() != "n":
+            userConfirm = input("Is this the cat you want to delete? All associated logs will be deleted with it too. (Y/N): ")
+            if userConfirm.lower() == "y":
+                sql.delete("cats", id)
+                print("Cat and its logs have been deleted successfuly!")
+                return
+            elif userConfirm.lower() == "n":
+                 return
+            else:
+                print("Invalid choice.")
+                continue
+
+    if mode.lower() == "log" or mode.lower() == "logs":
+        if id == None:
+            print("Logged metrics: ")
+            logs = sql.metricLog(id)
+            if logs == []:
+                print("No logs to delete.")
+                return
+            for l in logs:
+                 print(f"Cat: {l[8]} | Logged at: {l[7]} | Weight: {l[1]}kg | Activity: {l[2]} | Appetite: {l[3]} | Water: {l[4]} | Litter: {l[5]} | ID: {l[0]}")
+            print("\n")
+            try:
+                id = int(input("Select the log ID: "))
+            except ValueError:
+                print("Not an integer.")
+                return
+        selectedLog = sql.queryLog(id)
+        print("\n")
+        if selectedLog == []:
+            print("No logs match that ID.")
+            return
+        for l in selectedLog:
+            print(f"Cat: {l[8]} | Logged at: {l[7]} | Weight: {l[1]}kg | Activity: {l[2]} | Appetite: {l[3]} | Water: {l[4]} | Litter: {l[5]} | ID: {l[0]}")
+        userConfirm = "a"
+        while userConfirm.lower() != "y" or userConfirm.lower() != "n":
+            userConfirm = input("Is this the log you want to delete (Y/N): ")
+            if userConfirm.lower() == "y":
+                sql.delete("log", id)
+                print("Log has been deleted successfuly!")
+                return
+            elif userConfirm.lower() == "n":
+                return
+            else:
+                print("Invalid choice.")
+                continue
 
 if __name__ == "__main__":
     main()

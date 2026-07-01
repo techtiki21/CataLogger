@@ -103,6 +103,9 @@ def intro():
     click.echo(click.style("  list-cats", fg="cyan") + " - List all cats in the database")
     click.echo()
 
+    click.echo(click.style("  status", fg="cyan") + " - Show each cat and when they were last logged")
+    click.echo()
+
     click.echo(click.style("  history", fg="cyan") + " - View logged metrics")
     click.echo("    --cat                Show logs for a specific cat (optional)")
     click.echo()
@@ -134,6 +137,7 @@ def intro():
     click.echo()
     click.echo("  python main.py add-entry --name Luna --birth 2020-03-15 --breed Siamese")
     click.echo("  python main.py log --cat Luna --weight 4.2 --activity 3")
+    click.echo("  python main.py status")
     click.echo("  python main.py history --cat Luna")
     click.echo("  python main.py graph --cat Luna")
     click.echo("  python main.py overview --cat Luna")
@@ -567,6 +571,29 @@ def export(cat, output):
         err(f"Could not write file: ({e})")
         return
     ok(f"Exported {len(rows)} log(s) to {output}")
+
+@main.command()
+def status():
+    """Show each cat and when they were last logged"""
+    cats = sql.catStatus()
+    if cats == []:
+        err("No cats in the database.")
+        return
+    for name, breed, last in cats:
+        if last == None:
+            when = "never logged"
+        else:
+            days = (datetime.now() - datetime.strptime(last, "%Y-%m-%d %H:%M:%S")).days
+            if days == 0:
+                when = "today"
+            elif days == 1:
+                when = "1 day ago"
+            else:
+                  when = f"{days} days ago"
+        click.echo(
+            click.style(str(name), fg="blue")
+            + click.style(" | Last logged ", fg="white") + click.style(when, fg="blue")
+        )
 
 if __name__ == "__main__":
     main()

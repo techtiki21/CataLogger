@@ -180,3 +180,12 @@ def exportLogs(cat):
             SELECT name, created_at, weight_kg, activity_level, appetite, water_intake, litter, notes
             FROM log WHERE name = ?
         ''', (cat, )).fetchall()
+    
+def catStatus():
+    return cursor.execute('''
+        SELECT c.name, c.breed, MAX(l.created_at)
+        FROM cats c
+        LEFT JOIN log l ON c.id = l.cat_id
+        GROUP BY c.id
+        ORDER BY c.name
+    ''').fetchall()

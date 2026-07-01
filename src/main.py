@@ -82,6 +82,11 @@ def intro():
     click.echo("    --id                 ID of the entry to delete (optional, will prompt if not given)")
     click.echo()
 
+    click.echo(click.style("  edit", fg="cyan") + " - Edit a saved cat or a log entry")
+    click.echo("    --mode   (required)  'cat' or 'log'")
+    click.echo("    --id                 ID of the entry to edit (optional, will prompt if not given)")
+    click.echo()
+
     click.echo(click.style("EXAMPLES:", bold=True))
     click.echo()
     click.echo("  python main.py add-entry --name Luna --birth 2020-03-15 --breed Siamese")
@@ -90,6 +95,7 @@ def intro():
     click.echo("  python main.py graph --cat Luna")
     click.echo("  python main.py overview --cat Luna")
     click.echo("  python main.py delete --mode cat --id 1")
+    click.echo("  python main.py edit --mode log --id 5")
     click.echo()
     click.echo(click.style("TIP:", bold=True) + " Run any command with --help for more details.")
 
@@ -321,6 +327,162 @@ def delete(mode, id):
             else:
                 print("Invalid choice.")
                 continue
+
+@main.command()
+@click.option("--mode", type=click.Choice(["cats", "cat", "logs", "log"], case_sensitive=False), required=True, help="Edit an entry from saved cats or a log")
+@click.option("--id", type=int, help="ID of the row you want to edit")
+def edit(mode, id):
+    """Edit information about a saved cat or edit a log"""
+    if mode.lower() == "cat" or mode.lower() == "cats":
+        if id == None:
+            print("Saved Cats:")
+            cats = sql.listCats()
+            if cats == []:
+                print("No cats to edit.")
+                return
+            for cat in cats:
+                print(f"{cat[0]}: | Born: {cat[1]} | Breed: {cat[2]} | Entry Created: {cat[3]} | ID: {cat[4]}")
+            print("\n")
+            try:
+                id = int(input("Select the cat's ID: "))
+            except ValueError:
+                print("Not an integer.")
+                return
+        selectedCat = sql.queryCat(id)
+        print("\n")
+        if selectedCat == []:
+            print("No cats match that ID.")
+            return
+        for cat in selectedCat:
+            print(f"{cat[0]}: | Born: {cat[1]} | Breed: {cat[2]} | Entry Created: {cat[3]} | ID: {cat[4]}")
+        userConfirm = "a"
+        while True:
+            userConfirm = input("Is this the cat you want to edit? (Y/N): ")
+            if userConfirm.lower() == "y":
+                break
+            elif userConfirm.lower() == "n":
+                return
+            else:
+                print("Invalid choice.")
+                continue
+
+        field = "a"
+        while True:
+            field = input("What do you want to edit; (N)ame, (B)irth date, Bre(E)d: ")
+            if field.upper() == "N":
+                value = input("Enter the new name: ").lower()
+                if sql.updateEntry(id, "name", value):
+                    print("Name has been updated successfuly!")
+                return
+            elif field.upper() == "B":
+                value = input("Enter the new birth date (YYYY-MM-DD): ")
+                try:
+                    datetime.strptime(value, "%Y-%m-%d")
+                except ValueError:
+                    print("Invalid date format. Please use YYYY-MM-DD.")
+                    return
+                if sql.updateEntry(id, "birth_date", value):
+                    print("Birth date has been updated successfuly!")
+                return
+            elif field.upper() == "E":
+                value = input("Enter the new breed: ")
+                if sql.updateEntry(id, "breed", value):
+                    print("Breed has been updated successfuly!")
+                return
+            else:
+                print("Invalid choice.")
+                continue
+
+    if mode.lower() == "log" or mode.lower() == "logs":
+        if id == None:
+            print("Logged metrics: ")
+            logs = sql.metricLog(id)
+            if logs == []:
+                print("No logs to edit.")
+                return
+            for l in logs:
+                print(f"Cat: {l[8]} | Logged at: {l[7]} | Weight: {l[1]}kg | Activity: {l[2]} | Appetite: {l[3]} | Water: {l[4]} | Litter: {l[5]} | ID: {l[0]}")
+            print("\n")
+            try:
+                id = int(input("Select the log ID: "))
+            except ValueError:
+                print("Not an integer.")
+                return
+        selectedLog = sql.queryLog(id)
+        print("\n")
+        if selectedLog == []:
+            print("No logs match that ID.")
+            return
+        for l in selectedLog:
+            print(f"Cat: {l[8]} | Logged at: {l[7]} | Weight: {l[1]}kg | Activity: {l[2]} | Appetite: {l[3]} | Water: {l[4]} | Litter: {l[5]} | ID: {l[0]}")
+        userConfirm = "a"
+        while True:
+            userConfirm = input("Is this the log you want to edit? (Y/N): ")
+            if userConfirm.lower() == "y":
+                break
+            elif userConfirm.lower() == "n":
+                return
+            else:
+                print("Invalid choice.")
+                continue
+
+        field = "a"
+        while True:
+            field = input("What do you want to edit; (W)eight, (A)ctivity, App(E)tite, Wa(T)er, (L)itter, (N)otes: ")
+            if field.upper() == "W":
+                try:
+                    value = float(input("Enter the new weight (kg): "))
+                except ValueError:
+                    print("Must be a number.")
+                    return
+                if sql.updateLog(id, "weight_kg", value):
+                    print("Weight has been updated successfuly!")
+                return
+            elif field.upper() == "A":
+                try:
+                    value = int(input("Enter the new activity level (1-5): "))
+                except ValueError:
+                    print("Must be a number.")
+                    return
+                if value > 5 or value < 1:
+                    print("Bad activity level.")
+                    return
+                if sql.updateLog(id, "activity_level", value):
+                    print("Activity level has been updated successfuly!")
+                return
+            elif field.upper() == "E":
+                value = getFullOption(input("Enter the new appetite; None, (N)ormal, (L)ow, (H)igh, (N/A): "))
+                if value == None or value not in ("None", "Normal", "Low", "High", "N/A"):
+                    print("Wrong appetite value.")
+                    return
+                if sql.updateLog(id, "appetite", value):
+                    print("Appetite has been updated successfuly!")
+                return
+            elif field.upper() == "T":
+                value = getFullOption(input("Enter the new water intake; None, (N)ormal, (L)ow, (H)igh, (N/A): "))
+                if value == None or value not in ("None", "Normal", "Low", "High", "N/A"):
+                    print("Wrong water intake value.")
+                    return
+                if sql.updateLog(id, "water_intake", value):
+                    print("Water intake has been updated successfuly!")
+                return
+            elif field.upper() == "L":
+                value = getFullOption(input("Enter the new litter; (N)ormal, (S)training, (D)iarrhea, (C)onstipated, (N/A): "))
+                if value == None or value not in ("Normal", "Straining", "Diarrhea", "Constipated", "N/A"):
+                    print("Wrong litter value.")
+                    return
+                if sql.updateLog(id, "litter", value):
+                    print("Litter has been updated successfuly!")
+                return
+            elif field.upper() == "N":
+                value = input("Enter the new notes: ")
+                if sql.updateLog(id, "notes", value):
+                    print("Notes have been updated successfuly!")
+                return
+            else:
+                print("Invalid choice.")
+                continue
+
 
 if __name__ == "__main__":
     main()

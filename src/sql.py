@@ -49,6 +49,12 @@ def addEntry(name, birth, breed):
         print("Entry already exists!")
         return False
 
+def updateEntry(id, column, value):
+    cursor.execute('''
+        UPDATE cats SET ? = ? WHERE id = ?
+    ''', (column, value, id))
+    db.commit()
+
 def log(id, cat, weight, active, appetite, water, litter, notes):
     cursor.execute('''
         INSERT INTO log (cat_id, name, weight_kg, activity_level, appetite, water_intake, litter, notes)

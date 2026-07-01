@@ -322,5 +322,13 @@ def delete(mode, id):
                 print("Invalid choice.")
                 continue
 
+@main.command()
+@click.option("--mode", type=click.Choice(["cats", "cat", "logs", "log"], case_sensitive=False), required=True, help="Edit an entry from saved cats or a log")
+@click.option("--id", type=int, help="ID of the row you want to edit")
+def edit(mode, id):
+    """Edit information about a saved cat or edit a log"""
+    pass
+
+
 if __name__ == "__main__":
     main()

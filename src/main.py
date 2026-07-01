@@ -26,6 +26,31 @@ def getFullOption(letter):
         return None
 
 
+def catRow(cat):
+    """Format a cat row with white labels and blue values."""
+    line = click.style(str(cat[0]), fg="blue")
+    line += click.style(": | Born: ", fg="white") + click.style(str(cat[1]), fg="blue")
+    line += click.style(" | Breed: ", fg="white") + click.style(str(cat[2]), fg="blue")
+    line += click.style(" | Entry Created: ", fg="white") + click.style(str(cat[3]), fg="blue")
+    line += click.style(" | ID: ", fg="white") + click.style(str(cat[4]), fg="blue")
+    return line
+
+
+def logRow(l, show_name=True):
+    """Format a log row with white labels and blue values."""
+    line = ""
+    if show_name:
+        line += click.style("Cat: ", fg="white") + click.style(str(l[8]), fg="blue") + click.style(" | ", fg="white")
+    line += click.style("Logged at: ", fg="white") + click.style(str(l[7]), fg="blue")
+    line += click.style(" | Weight: ", fg="white") + click.style(f"{l[1]}kg", fg="blue")
+    line += click.style(" | Activity: ", fg="white") + click.style(str(l[2]), fg="blue")
+    line += click.style(" | Appetite: ", fg="white") + click.style(str(l[3]), fg="blue")
+    line += click.style(" | Water: ", fg="white") + click.style(str(l[4]), fg="blue")
+    line += click.style(" | Litter: ", fg="white") + click.style(str(l[5]), fg="blue")
+    line += click.style(" | ID: ", fg="white") + click.style(str(l[0]), fg="blue")
+    return line
+
+
 @click.group(invoke_without_command=True)
 @click.pass_context
 def main(ctx):
@@ -179,13 +204,13 @@ def log(cat, weight, activity, appetite, water, litter, notes):
         print("Wrong litter value.")
         return
     
-    print(f"Cat = {cat} | ID: {sql.fetchCat(cat.lower())}")
-    print(f"Weight = {weight}kg")
-    print(f"Activity = {activity}")
-    print(f"Appetite = {appetite}")
-    print(f"Water Intake = {water}")
-    print(f"Litter = {litter}")
-    print(f"Notes = {notes}")
+    click.echo(click.style("Cat = ", fg="white") + click.style(str(cat), fg="blue") + click.style(" | ID: ", fg="white") + click.style(str(sql.fetchCat(cat.lower())), fg="blue"))
+    click.echo(click.style("Weight = ", fg="white") + click.style(f"{weight}kg", fg="blue"))
+    click.echo(click.style("Activity = ", fg="white") + click.style(str(activity), fg="blue"))
+    click.echo(click.style("Appetite = ", fg="white") + click.style(str(appetite), fg="blue"))
+    click.echo(click.style("Water Intake = ", fg="white") + click.style(str(water), fg="blue"))
+    click.echo(click.style("Litter = ", fg="white") + click.style(str(litter), fg="blue"))
+    click.echo(click.style("Notes = ", fg="white") + click.style(str(notes), fg="blue"))
     userInput = 'a'
     while True:
         userInput = str(input("Confirm metrics? (y/n): "))
@@ -204,7 +229,7 @@ def list_cats():
     """List all cats stored in the database"""
     cats = sql.listCats()
     for cat in cats:
-        print(f"{cat[0]}: | Born: {cat[1]} | Breed: {cat[2]} | Entry Created: {cat[3]} | ID: {cat[4]}")
+        click.echo(catRow(cat))
 
 @main.command()
 @click.option("--cat", help="Show metrics of a specific cat.")
@@ -214,7 +239,7 @@ def history(cat):
     if cat == None:
         print("All saved metrics")
         for l in log:
-            print(f"Cat: {l[8]} | Logged at: {l[7]} | Weight: {l[1]}kg | Activity: {l[2]} | Appetite: {l[3]} | Water: {l[4]} | Litter: {l[5]} | ID: {l[0]}")
+            click.echo(logRow(l, show_name=True))
     else:
         log = sql.metricLog(cat.lower())
         if log == []:
@@ -222,7 +247,7 @@ def history(cat):
             return
         print(f"Metrics for {cat}:")
         for l in log:
-            print(f"Logged at: {l[7]} | Weight: {l[1]}kg | Activity: {l[2]} | Appetite: {l[3]} | Water: {l[4]} | Litter: {l[5]} | ID: {l[0]}")
+            click.echo(logRow(l, show_name=False))
 
 @main.command()
 @click.option("--cat", required=True, help="Graph the weight of a cat over time")
@@ -266,7 +291,7 @@ def delete(mode, id):
                 print("No cats to delete.")
                 return
             for cat in cats:
-                print(f"{cat[0]}: | Born: {cat[1]} | Breed: {cat[2]} | Entry Created: {cat[3]} | ID: {cat[4]}")
+                click.echo(catRow(cat))
             print("\n")
             try:
                 id = int(input("Select the cat's ID: "))
@@ -279,7 +304,7 @@ def delete(mode, id):
             print("No cats match that ID.")
             return
         for cat in selectedCat:
-            print(f"{cat[0]}: | Born: {cat[1]} | Breed: {cat[2]} | Entry Created: {cat[3]} | ID: {cat[4]}")
+            click.echo(catRow(cat))
         userConfirm = "a"
         while True:
             userConfirm = input("Is this the cat you want to delete? All associated logs will be deleted with it too. (Y/N): ")
@@ -301,7 +326,7 @@ def delete(mode, id):
                 print("No logs to delete.")
                 return
             for l in logs:
-                 print(f"Cat: {l[8]} | Logged at: {l[7]} | Weight: {l[1]}kg | Activity: {l[2]} | Appetite: {l[3]} | Water: {l[4]} | Litter: {l[5]} | ID: {l[0]}")
+                 click.echo(logRow(l, show_name=True))
             print("\n")
             try:
                 id = int(input("Select the log ID: "))
@@ -314,7 +339,7 @@ def delete(mode, id):
             print("No logs match that ID.")
             return
         for l in selectedLog:
-            print(f"Cat: {l[8]} | Logged at: {l[7]} | Weight: {l[1]}kg | Activity: {l[2]} | Appetite: {l[3]} | Water: {l[4]} | Litter: {l[5]} | ID: {l[0]}")
+            click.echo(logRow(l, show_name=True))
         userConfirm = "a"
         while True:
             userConfirm = input("Is this the log you want to delete (Y/N): ")
@@ -341,7 +366,7 @@ def edit(mode, id):
                 print("No cats to edit.")
                 return
             for cat in cats:
-                print(f"{cat[0]}: | Born: {cat[1]} | Breed: {cat[2]} | Entry Created: {cat[3]} | ID: {cat[4]}")
+                click.echo(catRow(cat))
             print("\n")
             try:
                 id = int(input("Select the cat's ID: "))
@@ -354,7 +379,7 @@ def edit(mode, id):
             print("No cats match that ID.")
             return
         for cat in selectedCat:
-            print(f"{cat[0]}: | Born: {cat[1]} | Breed: {cat[2]} | Entry Created: {cat[3]} | ID: {cat[4]}")
+            click.echo(catRow(cat))
         userConfirm = "a"
         while True:
             userConfirm = input("Is this the cat you want to edit? (Y/N): ")
@@ -401,7 +426,7 @@ def edit(mode, id):
                 print("No logs to edit.")
                 return
             for l in logs:
-                print(f"Cat: {l[8]} | Logged at: {l[7]} | Weight: {l[1]}kg | Activity: {l[2]} | Appetite: {l[3]} | Water: {l[4]} | Litter: {l[5]} | ID: {l[0]}")
+                click.echo(logRow(l, show_name=True))
             print("\n")
             try:
                 id = int(input("Select the log ID: "))
@@ -414,7 +439,7 @@ def edit(mode, id):
             print("No logs match that ID.")
             return
         for l in selectedLog:
-            print(f"Cat: {l[8]} | Logged at: {l[7]} | Weight: {l[1]}kg | Activity: {l[2]} | Appetite: {l[3]} | Water: {l[4]} | Litter: {l[5]} | ID: {l[0]}")
+            click.echo(logRow(l, show_name=True))
         userConfirm = "a"
         while True:
             userConfirm = input("Is this the log you want to edit? (Y/N): ")

@@ -113,45 +113,39 @@ def fetchCat(name):
         return "NoName"
 
 def listCats():
-    cats = cursor.execute('''
+    return cursor.execute('''
         SELECT name, birth_date, breed, created_at, ID FROM cats
     ''').fetchall()
-    return cats
 
 def queryCat(id):
-    cat = cursor.execute('''
+    return cursor.execute('''
         SELECT name, birth_date, breed, created_at, ID FROM cats
         WHERE id = ?
     ''', (id, )).fetchall()
-    return cat
 
 def queryLog(id):
-    log = cursor.execute('''
+    return cursor.execute('''
         SELECT id, weight_kg, activity_level, appetite, water_intake, litter, notes, created_at, name
         FROM log WHERE id = ?
     ''', (id, )).fetchall()
-    return log
 
 def metricLog(cat):
     if cat == None:
-        log = cursor.execute('''
+        return cursor.execute('''
             SELECT id, weight_kg, activity_level, appetite, water_intake, litter, notes, created_at, name
             FROM log
             ''').fetchall()
-        return log
     else:
-        log = cursor.execute('''
+        return cursor.execute('''
             SELECT id, weight_kg, activity_level, appetite, water_intake, litter, notes, created_at
             FROM log WHERE name = ?
         ''', (cat, )).fetchall()
-        return log
 
 def AIfetchLogs(cat_id):
-    logs = cursor.execute('''
+    return cursor.execute('''
         SELECT weight_kg, activity_level, appetite, water_intake, litter, notes
         FROM log WHERE cat_id = ?
     ''', (cat_id,)).fetchall()
-    return logs
 
 def delete(table, id):
     if table == "cats":
@@ -180,3 +174,19 @@ def exportLogs(cat):
             SELECT name, created_at, weight_kg, activity_level, appetite, water_intake, litter, notes
             FROM log WHERE name = ?
         ''', (cat, )).fetchall()
+    
+def catStatus():
+    return cursor.execute('''
+        SELECT c.name, c.breed, MAX(l.created_at)
+        FROM cats c
+        LEFT JOIN log l ON c.id = l.cat_id
+        GROUP BY c.id
+        ORDER BY c.name
+    ''').fetchall()
+
+def weightHistory(cat_id):
+    return cursor.execute('''
+        SELECT weight_kg, created_at FROM log
+        WHERE cat_id = ? AND weight_kg IS NOT NULL
+        ORDER BY created_at ASC
+    ''', (cat_id, )).fetchall()

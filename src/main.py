@@ -11,11 +11,13 @@ def ok(msg):
     """Print a success message in green."""
     click.echo(click.style(msg, fg="green"))
 
-
 def err(msg):
     """Print an error/failure message in red."""
     click.echo(click.style(msg, fg="red"))
 
+def warn(msg):
+    """Print a warning message in yellow."""
+    click.echo(click.style(msg, fg="yellow"))
 
 def getFullOption(letter):
     if letter == None:
@@ -37,7 +39,6 @@ def getFullOption(letter):
     else:
         return None
 
-
 def catRow(cat):
     """Format a cat row with white labels and blue values."""
     line = click.style(str(cat[0]), fg="blue")
@@ -46,7 +47,6 @@ def catRow(cat):
     line += click.style(" | Entry Created: ", fg="white") + click.style(str(cat[3]), fg="blue")
     line += click.style(" | ID: ", fg="white") + click.style(str(cat[4]), fg="blue")
     return line
-
 
 def logRow(l, show_name=True):
     """Format a log row with white labels and blue values."""
@@ -61,6 +61,21 @@ def logRow(l, show_name=True):
     line += click.style(" | Litter: ", fg="white") + click.style(str(l[5]), fg="blue")
     line += click.style(" | ID: ", fg="white") + click.style(str(l[0]), fg="blue")
     return line
+
+def weightAlert(cat_id, threshold=5.0):
+    # ai generated func
+    weights = sql.weightHistory(cat_id)
+    if len(weights) < 2:
+        return None
+    prev = weights[-2][0]
+    latest = weights[-1][0]
+    if prev == 0:
+        return None
+    pct = (latest - prev) / prev * 100
+    if abs(pct) >= threshold:
+        direction = "gained" if pct > 0 else "lost"
+        return f"Weight alert: {direction} {abs(pct):.1f}% since last log ({prev}kg -> {latest}kg)."
+    return None
 
 
 # cli commands
@@ -103,6 +118,9 @@ def intro():
     click.echo(click.style("  list-cats", fg="cyan") + " - List all cats in the database")
     click.echo()
 
+    click.echo(click.style("  status", fg="cyan") + " - Show each cat and when they were last logged")
+    click.echo()
+
     click.echo(click.style("  history", fg="cyan") + " - View logged metrics")
     click.echo("    --cat                Show logs for a specific cat (optional)")
     click.echo()
@@ -134,6 +152,7 @@ def intro():
     click.echo()
     click.echo("  python main.py add-entry --name Luna --birth 2020-03-15 --breed Siamese")
     click.echo("  python main.py log --cat Luna --weight 4.2 --activity 3")
+    click.echo("  python main.py status")
     click.echo("  python main.py history --cat Luna")
     click.echo("  python main.py graph --cat Luna")
     click.echo("  python main.py overview --cat Luna")
@@ -236,6 +255,9 @@ def log(cat, weight, activity, appetite, water, litter, notes):
         if userInput.lower() == 'y':
             sql.log(sql.fetchCat(cat.lower()), cat.lower(), weight, activity, appetite, water, litter, notes)
             ok(f"Metrics for {cat} has been logged!")
+            alert = weightAlert(sql.fetchCat(cat.lower()))
+            if alert:
+                warn(alert)
             break
         elif userInput.lower() == 'n':
             break
@@ -254,8 +276,8 @@ def list_cats():
 @click.option("--cat", help="Show metrics of a specific cat.")
 def history(cat):
     """Show metrics of all cats or a specific cat"""
-    log = sql.metricLog(cat)
     if cat == None:
+        log = sql.metricLog(cat)
         print("All saved metrics")
         for l in log:
             click.echo(logRow(l, show_name=True))
@@ -279,6 +301,8 @@ def graph(cat):
     dates = []
     weights = []
     for l in log:
+        if l[1] is None:
+            continue
         weights.append(l[1])
         dates.append(datetime.strptime(l[7], "%Y-%m-%d %H:%M:%S").strftime("%d/%m/%Y"))
     if weights == []:
@@ -361,7 +385,7 @@ def delete(mode, id):
             click.echo(logRow(l, show_name=True))
         userConfirm = "a"
         while True:
-            userConfirm = input("Is this the log you want to delete? (Y/N):  ")
+            userConfirm = input("Is this the log you want to delete? (Y/N): ")
             if userConfirm.lower() == "y":
                 sql.delete("log", id)
                 ok("Log has been deleted successfully!")
@@ -567,6 +591,30 @@ def export(cat, output):
         err(f"Could not write file: ({e})")
         return
     ok(f"Exported {len(rows)} log(s) to {output}")
+
+@main.command()
+def status():
+    """Show each cat and when they were last logged"""
+    cats = sql.catStatus()
+    if cats == []:
+        err("No cats in the database.")
+        return
+    for name, breed, last in cats:
+        if last == None:
+            when = "never logged"
+        else:
+            days = (datetime.now() - datetime.strptime(last, "%Y-%m-%d %H:%M:%S")).days
+            if days == 0:
+                when = "today"
+            elif days == 1:
+                when = "1 day ago"
+            else:
+                when = f"{days} days ago"
+        label = " | " if last == None else " | Last logged "
+        click.echo(
+            click.style(str(name), fg="blue")
+            + click.style(label, fg="white") + click.style(when, fg="blue")
+        )
 
 if __name__ == "__main__":
     main()

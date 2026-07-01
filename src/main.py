@@ -22,18 +22,80 @@ def getFullOption(letter):
         return "Constipated"
     if letter.upper() in ("NA", "N/A"):
         return "N/A"
+    else:
+        return None
 
 
-@click.group()
-def main():
+@click.group(invoke_without_command=True)
+@click.pass_context
+def main(ctx):
     """Catalogger: An AI-Powered Cat Health Logger"""
     print("\n")
     sql.initDB()
-    pass
+    if ctx.invoked_subcommand is None:
+        ctx.invoke(intro)
+
+@main.command()
+def intro():
+    """Display a full guide to all commands and their arguments"""
+    click.echo(click.style("=" * 50, bold=True))
+    click.echo(click.style("  CataLogger - AI-Powered Cat Health Logger", bold=True))
+    click.echo(click.style("=" * 50, bold=True))
+    click.echo()
+    click.echo(click.style("COMMANDS:", bold=True))
+    click.echo()
+
+    click.echo(click.style("  add-entry", fg="cyan") + " - Add a new cat to the database")
+    click.echo("    --name   (required)  Name of your cat")
+    click.echo("    --birth  (required)  Birth date, formatted as YYYY-MM-DD")
+    click.echo("    --breed              Breed of your cat")
+    click.echo()
+
+    click.echo(click.style("  log", fg="cyan") + " - Log daily health metrics for a cat")
+    click.echo("    --cat                Name of the cat to log")
+    click.echo("    --weight             Weight in kilograms")
+    click.echo("    --activity           Activity level (1-5)")
+    click.echo("    --appetite           None, (N)ormal, (L)ow, (H)igh, (N/A)")
+    click.echo("    --water              None, (N)ormal, (L)ow, (H)igh, (N/A)")
+    click.echo("    --litter             (N)ormal, (S)training, (D)iarrhea, (C)onstipated, (N/A)")
+    click.echo("    --notes              Extra notes for the AI to analyze")
+    click.echo("    If any argument is not provided, you will be prompted to enter it.")
+    click.echo()
+
+    click.echo(click.style("  list-cats", fg="cyan") + " - List all cats in the database")
+    click.echo()
+
+    click.echo(click.style("  history", fg="cyan") + " - View logged metrics")
+    click.echo("    --cat                Show logs for a specific cat (optional)")
+    click.echo()
+
+    click.echo(click.style("  graph", fg="cyan") + " - Graph a cat's weight over time")
+    click.echo("    --cat    (required)  Name of the cat to graph")
+    click.echo()
+
+    click.echo(click.style("  overview", fg="cyan") + " - Get an AI-generated health overview")
+    click.echo("    --cat    (required)  Name of the cat to analyze")
+    click.echo()
+
+    click.echo(click.style("  delete", fg="cyan") + " - Delete a cat or a log entry")
+    click.echo("    --mode   (required)  'cat' or 'log'")
+    click.echo("    --id                 ID of the entry to delete (optional, will prompt if not given)")
+    click.echo()
+
+    click.echo(click.style("EXAMPLES:", bold=True))
+    click.echo()
+    click.echo("  python main.py add-entry --name Luna --birth 2020-03-15 --breed Siamese")
+    click.echo("  python main.py log --cat Luna --weight 4.2 --activity 3")
+    click.echo("  python main.py history --cat Luna")
+    click.echo("  python main.py graph --cat Luna")
+    click.echo("  python main.py overview --cat Luna")
+    click.echo("  python main.py delete --mode cat --id 1")
+    click.echo()
+    click.echo(click.style("TIP:", bold=True) + " Run any command with --help for more details.")
 
 @main.command()
 @click.option("--name", required=True, help="Name of your cat.")
-@click.option("--birth", help="Formatted as YYYY-MM-DD")
+@click.option("--birth", required=True, help="Formatted as YYYY-MM-DD")
 @click.option("--breed", help="Breed of your cat.")
 def add_entry(name, birth, breed):
     """Add a new cat to the database"""
@@ -95,12 +157,21 @@ def log(cat, weight, activity, appetite, water, litter, notes):
     if activity > 5 or activity < 1:
         print("Bad activity level")
         return
-    if sql.fetchCat(cat) == "NoName":
+    if sql.fetchCat(cat.lower()) == "NoName":
         print("That cat does not exist.")
         return
     appetite = getFullOption(appetite)
+    if appetite == None:
+        print("Wrong appetite value.")
+        return
     water = getFullOption(water)
+    if water == None:
+        print("Wrong water intake value.")
+        return
     litter = getFullOption(litter)
+    if litter == None:
+        print("Wrong litter value.")
+        return
     
     print(f"Cat = {cat} | ID: {sql.fetchCat(cat.lower())}")
     print(f"Weight = {weight}kg")
@@ -110,7 +181,7 @@ def log(cat, weight, activity, appetite, water, litter, notes):
     print(f"Litter = {litter}")
     print(f"Notes = {notes}")
     userInput = 'a'
-    while userInput != 'n' or userInput != 'y':
+    while True:
         userInput = str(input("Confirm metrics? (y/n): "))
         if userInput.lower() == 'y':
             sql.log(sql.fetchCat(cat), cat.lower(), weight, activity, appetite, water, litter, notes)
@@ -140,6 +211,9 @@ def history(cat):
             print(f"Cat: {l[8]} | Logged at: {l[7]} | Weight: {l[1]}kg | Activity: {l[2]} | Appetite: {l[3]} | Water: {l[4]} | Litter: {l[5]} | ID: {l[0]}")
     else:
         log = sql.metricLog(cat.lower())
+        if log == []:
+            print(f"No saved logs for {cat}.")
+            return
         print(f"Metrics for {cat}:")
         for l in log:
             print(f"Logged at: {l[7]} | Weight: {l[1]}kg | Activity: {l[2]} | Appetite: {l[3]} | Water: {l[4]} | Litter: {l[5]} | ID: {l[0]}")
@@ -201,7 +275,7 @@ def delete(mode, id):
         for cat in selectedCat:
             print(f"{cat[0]}: | Born: {cat[1]} | Breed: {cat[2]} | Entry Created: {cat[3]} | ID: {cat[4]}")
         userConfirm = "a"
-        while userConfirm.lower() != "y" or userConfirm.lower() != "n":
+        while True:
             userConfirm = input("Is this the cat you want to delete? All associated logs will be deleted with it too. (Y/N): ")
             if userConfirm.lower() == "y":
                 sql.delete("cats", id)
@@ -236,7 +310,7 @@ def delete(mode, id):
         for l in selectedLog:
             print(f"Cat: {l[8]} | Logged at: {l[7]} | Weight: {l[1]}kg | Activity: {l[2]} | Appetite: {l[3]} | Water: {l[4]} | Litter: {l[5]} | ID: {l[0]}")
         userConfirm = "a"
-        while userConfirm.lower() != "y" or userConfirm.lower() != "n":
+        while True:
             userConfirm = input("Is this the log you want to delete (Y/N): ")
             if userConfirm.lower() == "y":
                 sql.delete("log", id)

@@ -5,6 +5,16 @@ import analyze
 import plotext as plt
 
 # extra functions
+def ok(msg):
+    """Print a success message in green."""
+    click.echo(click.style(msg, fg="green"))
+
+
+def err(msg):
+    """Print an error/failure message in red."""
+    click.echo(click.style(msg, fg="red"))
+
+
 def getFullOption(letter):
     if letter == None:
         return letter
@@ -51,6 +61,7 @@ def logRow(l, show_name=True):
     return line
 
 
+# cli commands
 @click.group(invoke_without_command=True)
 @click.pass_context
 def main(ctx):
@@ -134,7 +145,7 @@ def add_entry(name, birth, breed):
         try:
             datetime.strptime(birth, "%Y-%m-%d")
         except ValueError:
-            print("Invalid date format. Please use YYYY-MM-DD.")
+            err("Invalid date format. Please use YYYY-MM-DD.")
             return
     sql.addEntry(name.lower(), birth, breed)
 
@@ -151,13 +162,13 @@ def log(cat, weight, activity, appetite, water, litter, notes):
     while cat == None:
         cat = input("Enter the name of the cat: ")
         if sql.fetchCat(cat.lower()) == "NoName":
-            print("That cat does not exist.")
+            err("That cat does not exist.")
             cat = None
     while weight == None:
         try:
             weight = float(input("Enter the weight of the cat (kg): "))
         except ValueError:
-            print("Must be a number")
+            err("Must be a number")
             weight = None
     while activity == None:
         try:
@@ -165,43 +176,43 @@ def log(cat, weight, activity, appetite, water, litter, notes):
         except ValueError:
             activity = 0
         if activity > 5 or activity < 1:
-            print("Bad activity level")
+            err("Bad activity level")
             activity = None
     while appetite == None:
         appetite = input("How much appetite does the cat have; None, (N)ormal, (L)ow, (H)igh, (N/A): ")
         if appetite.upper() not in ("NONE", "N", "L", "H", "N/A", "NA"):
-            print("Not a valid appetite type")
+            err("Not a valid appetite type")
             appetite = None
     while water == None:
         water = input("How much water does the cat take; None, (N)ormal, (L)ow, (H)igh, (N/A): ")
         if water.upper() not in ("NONE", "N", "L", "H", "N/A", "NA"):
-            print("Not a valid water intake type")
+            err("Not a valid water intake type")
             water = None
     while litter == None:
         litter = input("What's the litter of the cat like; (N)ormal, (S)training, (D)iarrhea, (C)onstipated, (N/A):")
         if litter.upper() not in ("N", "S", "D", "C", "N/A", "NA"):
-            print("Not a valid litter type")
+            err("Not a valid litter type")
             litter = None
     if notes == None:
         notes = input("Any extra notes you would like to add (blank to leave empty): ")
 
     if activity > 5 or activity < 1:
-        print("Bad activity level")
+        err("Bad activity level")
         return
     if sql.fetchCat(cat.lower()) == "NoName":
-        print("That cat does not exist.")
+        err("That cat does not exist.")
         return
     appetite = getFullOption(appetite)
     if appetite == None:
-        print("Wrong appetite value.")
+        err("Wrong appetite value.")
         return
     water = getFullOption(water)
     if water == None:
-        print("Wrong water intake value.")
+        err("Wrong water intake value.")
         return
     litter = getFullOption(litter)
     if litter == None:
-        print("Wrong litter value.")
+        err("Wrong litter value.")
         return
     
     click.echo(click.style("Cat = ", fg="white") + click.style(str(cat), fg="blue") + click.style(" | ID: ", fg="white") + click.style(str(sql.fetchCat(cat.lower())), fg="blue"))
@@ -216,12 +227,12 @@ def log(cat, weight, activity, appetite, water, litter, notes):
         userInput = str(input("Confirm metrics? (y/n): "))
         if userInput.lower() == 'y':
             sql.log(sql.fetchCat(cat), cat.lower(), weight, activity, appetite, water, litter, notes)
-            print(f"Metrics for {cat} has been logged!")
+            ok(f"Metrics for {cat} has been logged!")
             break
         elif userInput.lower() == 'n':
             break
         else:
-            print("Invalid option.")
+            err("Invalid option.")
             continue
 
 @main.command()
@@ -243,7 +254,7 @@ def history(cat):
     else:
         log = sql.metricLog(cat.lower())
         if log == []:
-            print(f"No saved logs for {cat}.")
+            err(f"No saved logs for {cat}.")
             return
         print(f"Metrics for {cat}:")
         for l in log:
@@ -254,7 +265,7 @@ def history(cat):
 def graph(cat):
     """Graph the weight of a cat over time"""
     if sql.fetchCat(cat.lower()) == "NoName":
-        print("That cat does not exist.")
+        err("That cat does not exist.")
         return
     log = sql.metricLog(cat.lower())
     dates = []
@@ -263,7 +274,7 @@ def graph(cat):
         weights.append(l[1])
         dates.append(datetime.strptime(l[7], "%Y-%m-%d %H:%M:%S").strftime("%d/%m/%Y"))
     if weights == []:
-        print(f"No weights logged for {cat}.")
+        err(f"No weights logged for {cat}.")
         return
     plt.plot(weights)
     plt.xticks(range(len(dates)), dates)
@@ -275,20 +286,20 @@ def graph(cat):
 @click.option("--cat", required=True, help="Name of the cat to analyze.")
 def overview(cat):
     """Use AI to provide a health overview of a specific cat"""
-    analyze.aiAnalysis(cat)
+    analyze.aiAnalysis(cat.lower())
 
 @main.command()
 @click.option("--mode", type=click.Choice(["cats", "cat", "logs", "log"], case_sensitive=False), required=True, help="Clear an entry from saved cats or a log")
 @click.option("--id", type=int, help="ID of the row you want to clear")
 def delete(mode, id):
-    """Delete a cat entry or remove a log from the database permenantly"""
+    """Delete a cat entry or remove a log from the database permanently"""
     selectedCat = []
     if mode.lower() == "cat" or mode.lower() == "cats":
         if id == None:
             print("Saved Cats:")
             cats = sql.listCats()
             if cats == []:
-                print("No cats to delete.")
+                err("No cats to delete.")
                 return
             for cat in cats:
                 click.echo(catRow(cat))
@@ -296,12 +307,12 @@ def delete(mode, id):
             try:
                 id = int(input("Select the cat's ID: "))
             except ValueError:
-                print("Not an integer.")
+                err("Not an integer.")
                 return
         selectedCat = sql.queryCat(id)
         print("\n")
         if selectedCat == []:
-            print("No cats match that ID.")
+            err("No cats match that ID.")
             return
         for cat in selectedCat:
             click.echo(catRow(cat))
@@ -310,12 +321,12 @@ def delete(mode, id):
             userConfirm = input("Is this the cat you want to delete? All associated logs will be deleted with it too. (Y/N): ")
             if userConfirm.lower() == "y":
                 sql.delete("cats", id)
-                print("Cat and its logs have been deleted successfuly!")
+                ok("Cat and its logs have been deleted successfully!")
                 return
             elif userConfirm.lower() == "n":
                  return
             else:
-                print("Invalid choice.")
+                err("Invalid choice.")
                 continue
 
     if mode.lower() == "log" or mode.lower() == "logs":
@@ -323,7 +334,7 @@ def delete(mode, id):
             print("Logged metrics: ")
             logs = sql.metricLog(id)
             if logs == []:
-                print("No logs to delete.")
+                err("No logs to delete.")
                 return
             for l in logs:
                  click.echo(logRow(l, show_name=True))
@@ -331,26 +342,26 @@ def delete(mode, id):
             try:
                 id = int(input("Select the log ID: "))
             except ValueError:
-                print("Not an integer.")
+                err("Not an integer.")
                 return
         selectedLog = sql.queryLog(id)
         print("\n")
         if selectedLog == []:
-            print("No logs match that ID.")
+            err("No logs match that ID.")
             return
         for l in selectedLog:
             click.echo(logRow(l, show_name=True))
         userConfirm = "a"
         while True:
-            userConfirm = input("Is this the log you want to delete (Y/N): ")
+            userConfirm = input("Is this the log you want to delete? (Y/N):  ")
             if userConfirm.lower() == "y":
                 sql.delete("log", id)
-                print("Log has been deleted successfuly!")
+                ok("Log has been deleted successfully!")
                 return
             elif userConfirm.lower() == "n":
                 return
             else:
-                print("Invalid choice.")
+                err("Invalid choice.")
                 continue
 
 @main.command()
@@ -363,7 +374,7 @@ def edit(mode, id):
             print("Saved Cats:")
             cats = sql.listCats()
             if cats == []:
-                print("No cats to edit.")
+                err("No cats to edit.")
                 return
             for cat in cats:
                 click.echo(catRow(cat))
@@ -371,12 +382,12 @@ def edit(mode, id):
             try:
                 id = int(input("Select the cat's ID: "))
             except ValueError:
-                print("Not an integer.")
+                err("Not an integer.")
                 return
         selectedCat = sql.queryCat(id)
         print("\n")
         if selectedCat == []:
-            print("No cats match that ID.")
+            err("No cats match that ID.")
             return
         for cat in selectedCat:
             click.echo(catRow(cat))
@@ -388,7 +399,7 @@ def edit(mode, id):
             elif userConfirm.lower() == "n":
                 return
             else:
-                print("Invalid choice.")
+                err("Invalid choice.")
                 continue
 
         field = "a"
@@ -397,25 +408,25 @@ def edit(mode, id):
             if field.upper() == "N":
                 value = input("Enter the new name: ").lower()
                 if sql.updateEntry(id, "name", value):
-                    print("Name has been updated successfuly!")
+                    ok("Name has been updated successfully!")
                 return
             elif field.upper() == "B":
                 value = input("Enter the new birth date (YYYY-MM-DD): ")
                 try:
                     datetime.strptime(value, "%Y-%m-%d")
                 except ValueError:
-                    print("Invalid date format. Please use YYYY-MM-DD.")
+                    err("Invalid date format. Please use YYYY-MM-DD.")
                     return
                 if sql.updateEntry(id, "birth_date", value):
-                    print("Birth date has been updated successfuly!")
+                    ok("Birth date has been updated successfully!")
                 return
             elif field.upper() == "E":
                 value = input("Enter the new breed: ")
                 if sql.updateEntry(id, "breed", value):
-                    print("Breed has been updated successfuly!")
+                    ok("Breed has been updated successfully!")
                 return
             else:
-                print("Invalid choice.")
+                err("Invalid choice.")
                 continue
 
     if mode.lower() == "log" or mode.lower() == "logs":
@@ -423,7 +434,7 @@ def edit(mode, id):
             print("Logged metrics: ")
             logs = sql.metricLog(id)
             if logs == []:
-                print("No logs to edit.")
+                err("No logs to edit.")
                 return
             for l in logs:
                 click.echo(logRow(l, show_name=True))
@@ -431,12 +442,12 @@ def edit(mode, id):
             try:
                 id = int(input("Select the log ID: "))
             except ValueError:
-                print("Not an integer.")
+                err("Not an integer.")
                 return
         selectedLog = sql.queryLog(id)
         print("\n")
         if selectedLog == []:
-            print("No logs match that ID.")
+            err("No logs match that ID.")
             return
         for l in selectedLog:
             click.echo(logRow(l, show_name=True))
@@ -448,7 +459,7 @@ def edit(mode, id):
             elif userConfirm.lower() == "n":
                 return
             else:
-                print("Invalid choice.")
+                err("Invalid choice.")
                 continue
 
         field = "a"
@@ -458,54 +469,54 @@ def edit(mode, id):
                 try:
                     value = float(input("Enter the new weight (kg): "))
                 except ValueError:
-                    print("Must be a number.")
+                    err("Must be a number.")
                     return
                 if sql.updateLog(id, "weight_kg", value):
-                    print("Weight has been updated successfuly!")
+                    ok("Weight has been updated successfully!")
                 return
             elif field.upper() == "A":
                 try:
                     value = int(input("Enter the new activity level (1-5): "))
                 except ValueError:
-                    print("Must be a number.")
+                    err("Must be a number.")
                     return
                 if value > 5 or value < 1:
-                    print("Bad activity level.")
+                    err("Bad activity level.")
                     return
                 if sql.updateLog(id, "activity_level", value):
-                    print("Activity level has been updated successfuly!")
+                    ok("Activity level has been updated successfully!")
                 return
             elif field.upper() == "E":
                 value = getFullOption(input("Enter the new appetite; None, (N)ormal, (L)ow, (H)igh, (N/A): "))
                 if value == None or value not in ("None", "Normal", "Low", "High", "N/A"):
-                    print("Wrong appetite value.")
+                    err("Wrong appetite value.")
                     return
                 if sql.updateLog(id, "appetite", value):
-                    print("Appetite has been updated successfuly!")
+                    ok("Appetite has been updated successfully!")
                 return
             elif field.upper() == "T":
                 value = getFullOption(input("Enter the new water intake; None, (N)ormal, (L)ow, (H)igh, (N/A): "))
                 if value == None or value not in ("None", "Normal", "Low", "High", "N/A"):
-                    print("Wrong water intake value.")
+                    err("Wrong water intake value.")
                     return
                 if sql.updateLog(id, "water_intake", value):
-                    print("Water intake has been updated successfuly!")
+                    ok("Water intake has been updated successfully!")
                 return
             elif field.upper() == "L":
                 value = getFullOption(input("Enter the new litter; (N)ormal, (S)training, (D)iarrhea, (C)onstipated, (N/A): "))
                 if value == None or value not in ("Normal", "Straining", "Diarrhea", "Constipated", "N/A"):
-                    print("Wrong litter value.")
+                    err("Wrong litter value.")
                     return
                 if sql.updateLog(id, "litter", value):
-                    print("Litter has been updated successfuly!")
+                    ok("Litter has been updated successfully!")
                 return
             elif field.upper() == "N":
                 value = input("Enter the new notes: ")
                 if sql.updateLog(id, "notes", value):
-                    print("Notes have been updated successfuly!")
+                    ok("Notes have been updated successfully!")
                 return
             else:
-                print("Invalid choice.")
+                err("Invalid choice.")
                 continue
 
 

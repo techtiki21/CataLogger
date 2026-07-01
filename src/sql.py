@@ -1,6 +1,17 @@
 import sqlite3
 from pathlib import Path
 import datetime
+import click
+
+
+def ok(msg):
+    """Print a success message in green."""
+    click.echo(click.style(msg, fg="green"))
+
+
+def err(msg):
+    """Print an error/failure message in red."""
+    click.echo(click.style(msg, fg="red"))
 
 
 def initDB():
@@ -44,26 +55,31 @@ def addEntry(name, birth, breed):
             VALUES(?,?,?)
         ''', (name, birth, breed))
         db.commit()
-        print(f"{name} added to database successfuly!")
+        ok(f"{name} added to database successfully!")
     except sqlite3.IntegrityError:
-        print("Entry already exists!")
+        err("Entry already exists!")
         return False
 
 def updateEntry(id, column, value):
     allowed = ("name", "birth_date", "breed")
     if column not in allowed:
-        print("Invalid column.")
+        err("Invalid column.")
         return False
-    cursor.execute(f'''
-        UPDATE cats SET {column} = ? WHERE id = ?
-    ''', (value, id))
-    db.commit()
-    return True
+    try:
+        cursor.execute(f'''
+            UPDATE cats SET {column} = ? WHERE id = ?
+        ''', (value, id))
+        db.commit()
+        return True
+    except sqlite3.IntegrityError:
+        err("That cat already exists! Choose a different name.")
+        return False
+    
 
 def updateLog(id, column, value):
     allowed = ("weight_kg", "activity_level", "appetite", "water_intake", "litter", "notes")
     if column not in allowed:
-        print("Invalid column.")
+        err("Invalid column.")
         return False
     cursor.execute(f'''
         UPDATE log SET {column} = ? WHERE id = ?
@@ -140,6 +156,6 @@ def delete(table, id):
             WHERE id = ?
         ''', (id, ))
     else:
-        print("Select a table")
+        err("Select a table")
         return
     db.commit()

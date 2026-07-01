@@ -2,16 +2,23 @@ from groq import Groq, AuthenticationError
 from dotenv import load_dotenv
 import os
 import sql
+import click
 
 load_dotenv()
 
+
+def err(msg):
+    """Print an error/failure message in red."""
+    click.echo(click.style(msg, fg="red"))
+
+
 def aiAnalysis(cat_name):
     if not os.getenv("API_KEY"):
-        print("No API key found. Add API_KEY to your .env file.")
+        err("No API key found. Add API_KEY to your .env file.")
         return
     cat_id = sql.fetchCat(cat_name)
     if cat_id == "NoName":
-        print("This cat does not exist. Check for any misspellings.")
+        err("This cat does not exist. Check for any misspellings.")
         return
     
     logs = sql.AIfetchLogs(cat_id)
@@ -45,6 +52,10 @@ def aiAnalysis(cat_name):
 
         for chunk in completion:
             print(chunk.choices[0].delta.content or "", end="")
+        print("\n")
     except AuthenticationError:
-        print("Invalid Groq API Key. Make sure it's correct and not expired.")
+        err("Invalid Groq API Key. Make sure it's correct and not expired.")
+        return
+    except Exception as e:
+        err(f"Could not get an AI overview right now: ({e})")
         return

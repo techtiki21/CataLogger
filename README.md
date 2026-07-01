@@ -101,8 +101,8 @@ Edit an entry of a cat or a log.
 
 | Arguments  | Explanation                                                                                             | Required |
 | ---------- | ------------------------------------------------------------------------------------------------------- | -------- |
-| `--mode` | Edit an entry from the `cats` table or the `log` tableAccepted arguments: `cat, cats, log, logs ` | YES      |
-| `--id`   | Select a row ID to edit. If not provided, possible options will be displayed with their ID's            | NO       |
+| `--mode` | Edit an entry from the `cats` table or the `log` table<br />Accepted arguments: `cat, cats, log, logs ` | YES      |
+| `--id`   | Select a row ID to edit.<br />If not provided, possible options will be displayed with their ID's            | NO       |
 
 ### `delete`
 
@@ -110,8 +110,8 @@ Deleta an entry of a cat or a log.
 
 | Arguments  | Explanation                                                                                               | Required |
 | ---------- | --------------------------------------------------------------------------------------------------------- | -------- |
-| `--mode` | Delete an entry from the `cats` table or the `log` tableAccepted arguments: `cat, cats, log, logs ` | YES      |
-| `--id`   | Select a row ID to delete. If not provided, possible options will be displayed with their ID's            | NO       |
+| `--mode` | Delete an entry from the `cats` table or the `log` table<br />Accepted arguments: `cat, cats, log, logs ` | YES      |
+| `--id`   | Select a row ID to delete.<br />If not provided, possible options will be displayed with their ID's            | NO       |
 
 ### `overview`
 

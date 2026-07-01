@@ -1,6 +1,8 @@
 from datetime import datetime
 import click
 import sql
+import csv
+import os
 import analyze
 import plotext as plt
 
@@ -123,6 +125,11 @@ def intro():
     click.echo("    --id                 ID of the entry to edit (optional, will prompt if not given)")
     click.echo()
 
+    click.echo(click.style("  export", fg="cyan") + " - Export logged metrics to a CSV file")
+    click.echo("    --cat                Cat to export (all cats if omitted)")
+    click.echo("    --output             Output file path (default: cat_a_log.csv)")
+    click.echo()
+
     click.echo(click.style("EXAMPLES:", bold=True))
     click.echo()
     click.echo("  python main.py add-entry --name Luna --birth 2020-03-15 --breed Siamese")
@@ -132,6 +139,7 @@ def intro():
     click.echo("  python main.py overview --cat Luna")
     click.echo("  python main.py delete --mode cat --id 1")
     click.echo("  python main.py edit --mode log --id 5")
+    click.echo("  python main.py export --cat Luna --output luna_logs.csv")
     click.echo()
     click.echo(click.style("TIP:", bold=True) + " Run any command with --help for more details.")
 
@@ -226,7 +234,7 @@ def log(cat, weight, activity, appetite, water, litter, notes):
     while True:
         userInput = str(input("Confirm metrics? (y/n): "))
         if userInput.lower() == 'y':
-            sql.log(sql.fetchCat(cat), cat.lower(), weight, activity, appetite, water, litter, notes)
+            sql.log(sql.fetchCat(cat.lower()), cat.lower(), weight, activity, appetite, water, litter, notes)
             ok(f"Metrics for {cat} has been logged!")
             break
         elif userInput.lower() == 'n':
@@ -519,6 +527,46 @@ def edit(mode, id):
                 err("Invalid choice.")
                 continue
 
+@main.command()
+@click.option("--cat", help="Which cat data would you like to export")
+@click.option("--output", default="cat_a_log.csv", help="Where to export the .csv file")
+def export(cat, output):
+    """Export logged metrics to a CSV file"""
+    if cat is not None:
+        if sql.fetchCat(cat.lower()) == "NoName":
+            err("That cat does not exist.")
+            return
+        rows = sql.exportLogs(cat.lower())
+    else:
+        rows = sql.exportLogs(None)
+
+    if rows == []:
+        err("No logs to export.")
+        return
+
+    if os.path.exists(output):
+        err(f"'{output}' already exists.")
+        userConfirm = "a"
+        while True:
+            userConfirm = input("Overwrite it? (Y/N): ")
+            if userConfirm.lower() == "y":
+                break
+            elif userConfirm.lower() == "n":
+                return
+            else:
+                err("Invalid choice.")
+                continue
+
+    headers = ["Cat", "Logged At", "Weight (kg)", "Activity", "Appetite", "Water", "Litter", "Notes"]
+    try:
+        with open(output, "w", newline="", encoding="utf-8") as f:
+            writer = csv.writer(f)
+            writer.writerow(headers)
+            writer.writerows(rows)
+    except OSError as e:
+        err(f"Could not write file: ({e})")
+        return
+    ok(f"Exported {len(rows)} log(s) to {output}")
 
 if __name__ == "__main__":
     main()

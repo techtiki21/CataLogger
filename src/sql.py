@@ -1,6 +1,7 @@
 import sqlite3
 from pathlib import Path
 import datetime
+import sys
 import click
 
 
@@ -17,7 +18,15 @@ def err(msg):
 def initDB():
     global db, cursor
 
-    db_path = Path(__file__).with_name('cat-a-log.db')
+    # When frozen into an executable (PyInstaller), __file__ points to a temp
+    # extraction folder that is wiped on exit, so store the DB next to the
+    # executable instead. Otherwise store it next to this source file.
+    if getattr(sys, "frozen", False):
+        base = Path(sys.executable).parent
+    else:
+        base = Path(__file__).parent
+    db_path = base / "cat-a-log.db"
+
     db = sqlite3.connect(db_path)
     cursor = db.cursor()
 
@@ -159,3 +168,15 @@ def delete(table, id):
         err("Select a table")
         return
     db.commit()
+
+def exportLogs(cat):
+    if cat is None:
+        return cursor.execute('''
+            SELECT name, created_at, weight_kg, activity_level, appetite, water_intake, litter, notes
+            FROM log
+        ''').fetchall()
+    else:
+        return cursor.execute('''
+            SELECT name, created_at, weight_kg, activity_level, appetite, water_intake, litter, notes
+            FROM log WHERE name = ?
+        ''', (cat, )).fetchall()

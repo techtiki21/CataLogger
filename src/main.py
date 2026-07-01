@@ -3,6 +3,7 @@ import click
 import sql
 import csv
 import os
+import shlex
 import analyze
 import plotext as plt
 
@@ -63,7 +64,8 @@ def logRow(l, show_name=True):
     return line
 
 def weightAlert(cat_id, threshold=5.0):
-    # ai generated func
+    """Return a warning if the latest weight changed by more than
+    `threshold` percent from the previous log, else None."""
     weights = sql.weightHistory(cat_id)
     if len(weights) < 2:
         return None
@@ -78,6 +80,25 @@ def weightAlert(cat_id, threshold=5.0):
     return None
 
 
+# intro styling colors
+ARG_COLOR = "cyan"    # command names
+SUB_COLOR = "yellow"  # option flags (standard ANSI, works on old terminals)
+VAL_COLOR = "green"   # example values
+
+def optLine(flag, rest):
+    """Format a command option line with a colored flag."""
+    return "    " + click.style(flag, fg=SUB_COLOR) + rest
+
+def exampleLine(cmd, pairs):
+    """Format an example line: cyan command, yellow flags, green values."""
+    line = "  ./catalogger-cli " + click.style(cmd, fg=ARG_COLOR)
+    for flag, value in pairs:
+        line += " " + click.style(flag, fg=SUB_COLOR)
+        if value is not None:
+            line += " " + click.style(value, fg=VAL_COLOR)
+    return line
+
+
 # cli commands
 @click.group(invoke_without_command=True)
 @click.pass_context
@@ -86,7 +107,30 @@ def main(ctx):
     print("\n")
     sql.initDB()
     if ctx.invoked_subcommand is None:
+        # No subcommand (e.g. the exe was double-clicked) -> interactive mode.
+        # Show the guide, then keep the terminal open for repeated commands.
         ctx.invoke(intro)
+        click.echo()
+        click.echo(click.style("Interactive mode - type a command (or 'exit' to quit).", fg="cyan"))
+        while True:
+            try:
+                raw = input("\ncatalogger> ").strip()
+            except (EOFError, KeyboardInterrupt):
+                break
+            if raw == "":
+                continue
+            if raw.lower() in ("exit", "quit", "q"):
+                break
+            try:
+                # Re-invoke the CLI with the typed arguments. standalone_mode=False
+                # stops Click from calling sys.exit() after each command.
+                main.main(args=shlex.split(raw), standalone_mode=False)
+            except click.ClickException as e:
+                e.show()
+            except SystemExit:
+                pass
+            except Exception as e:
+                err(f"Something went wrong: ({e})")
 
 @main.command()
 def intro():
@@ -98,67 +142,70 @@ def intro():
     click.echo(click.style("COMMANDS:", bold=True))
     click.echo()
 
-    click.echo(click.style("  add-entry", fg="cyan") + " - Add a new cat to the database")
-    click.echo("    --name   (required)  Name of your cat")
-    click.echo("    --birth  (required)  Birth date, formatted as YYYY-MM-DD")
-    click.echo("    --breed              Breed of your cat")
+    click.echo(click.style("  add-entry", fg=ARG_COLOR) + " - Add a new cat to the database")
+    click.echo(optLine("--name ", " (required)  Name of your cat"))
+    click.echo(optLine("--birth", " (required)  Birth date, formatted as YYYY-MM-DD"))
+    click.echo(optLine("--breed", "              Breed of your cat"))
     click.echo()
 
-    click.echo(click.style("  log", fg="cyan") + " - Log daily health metrics for a cat")
-    click.echo("    --cat                Name of the cat to log")
-    click.echo("    --weight             Weight in kilograms")
-    click.echo("    --activity           Activity level (1-5)")
-    click.echo("    --appetite           None, (N)ormal, (L)ow, (H)igh, (N/A)")
-    click.echo("    --water              None, (N)ormal, (L)ow, (H)igh, (N/A)")
-    click.echo("    --litter             (N)ormal, (S)training, (D)iarrhea, (C)onstipated, (N/A)")
-    click.echo("    --notes              Extra notes for the AI to analyze")
+    click.echo(click.style("  log", fg=ARG_COLOR) + " - Log daily health metrics for a cat")
+    click.echo(optLine("--cat     ", "           Name of the cat to log"))
+    click.echo(optLine("--weight  ", "           Weight in kilograms"))
+    click.echo(optLine("--activity", "           Activity level (1-5)"))
+    click.echo(optLine("--appetite", "           None, (N)ormal, (L)ow, (H)igh, (N/A)"))
+    click.echo(optLine("--water   ", "           None, (N)ormal, (L)ow, (H)igh, (N/A)"))
+    click.echo(optLine("--litter  ", "           (N)ormal, (S)training, (D)iarrhea, (C)onstipated, (N/A)"))
+    click.echo(optLine("--notes   ", "           Extra notes for the AI to analyze"))
     click.echo("    If any argument is not provided, you will be prompted to enter it.")
     click.echo()
 
-    click.echo(click.style("  list-cats", fg="cyan") + " - List all cats in the database")
+    click.echo(click.style("  list-cats", fg=ARG_COLOR) + " - List all cats in the database")
     click.echo()
 
-    click.echo(click.style("  status", fg="cyan") + " - Show each cat and when they were last logged")
+    click.echo(click.style("  status", fg=ARG_COLOR) + " - Show each cat and when they were last logged")
     click.echo()
 
-    click.echo(click.style("  history", fg="cyan") + " - View logged metrics")
-    click.echo("    --cat                Show logs for a specific cat (optional)")
+    click.echo(click.style("  history", fg=ARG_COLOR) + " - View logged metrics")
+    click.echo(optLine("--cat", "                Show logs for a specific cat (optional)"))
     click.echo()
 
-    click.echo(click.style("  graph", fg="cyan") + " - Graph a cat's weight over time")
-    click.echo("    --cat    (required)  Name of the cat to graph")
+    click.echo(click.style("  graph", fg=ARG_COLOR) + " - Graph a cat's weight over time")
+    click.echo(optLine("--cat", " (required)  Name of the cat to graph"))
     click.echo()
 
-    click.echo(click.style("  overview", fg="cyan") + " - Get an AI-generated health overview")
-    click.echo("    --cat    (required)  Name of the cat to analyze")
+    click.echo(click.style("  overview", fg=ARG_COLOR) + " - Get an AI-generated health overview")
+    click.echo(optLine("--cat", " (required)  Name of the cat to analyze"))
     click.echo()
 
-    click.echo(click.style("  delete", fg="cyan") + " - Delete a cat or a log entry")
-    click.echo("    --mode   (required)  'cat' or 'log'")
-    click.echo("    --id                 ID of the entry to delete (optional, will prompt if not given)")
+    click.echo(click.style("  delete", fg=ARG_COLOR) + " - Delete a cat or a log entry")
+    click.echo(optLine("--mode", " (required)  'cat' or 'log'"))
+    click.echo(optLine("--id  ", "              ID of the entry to delete (optional, will prompt if not given)"))
     click.echo()
 
-    click.echo(click.style("  edit", fg="cyan") + " - Edit a saved cat or a log entry")
-    click.echo("    --mode   (required)  'cat' or 'log'")
-    click.echo("    --id                 ID of the entry to edit (optional, will prompt if not given)")
+    click.echo(click.style("  edit", fg=ARG_COLOR) + " - Edit a saved cat or a log entry")
+    click.echo(optLine("--mode", " (required)  'cat' or 'log'"))
+    click.echo(optLine("--id  ", "              ID of the entry to edit (optional, will prompt if not given)"))
     click.echo()
 
-    click.echo(click.style("  export", fg="cyan") + " - Export logged metrics to a CSV file")
-    click.echo("    --cat                Cat to export (all cats if omitted)")
-    click.echo("    --output             Output file path (default: cat_a_log.csv)")
+    click.echo(click.style("  export", fg=ARG_COLOR) + " - Export logged metrics to a CSV file")
+    click.echo(optLine("--cat   ", "             Cat to export (all cats if omitted)"))
+    click.echo(optLine("--output", "             Output file path (default: cat_a_log.csv)"))
     click.echo()
 
     click.echo(click.style("EXAMPLES:", bold=True))
     click.echo()
-    click.echo("  python main.py add-entry --name Luna --birth 2020-03-15 --breed Siamese")
-    click.echo("  python main.py log --cat Luna --weight 4.2 --activity 3")
-    click.echo("  python main.py status")
-    click.echo("  python main.py history --cat Luna")
-    click.echo("  python main.py graph --cat Luna")
-    click.echo("  python main.py overview --cat Luna")
-    click.echo("  python main.py delete --mode cat --id 1")
-    click.echo("  python main.py edit --mode log --id 5")
-    click.echo("  python main.py export --cat Luna --output luna_logs.csv")
+    click.echo(click.style("  From a terminal, prefix commands with ./catalogger-cli", fg="white"))
+    click.echo(click.style("  In interactive mode, type just the command (e.g. 'status').", fg="white"))
+    click.echo()
+    click.echo(exampleLine("add-entry", [("--name", "Luna"), ("--birth", "2020-03-15"), ("--breed", "Siamese")]))
+    click.echo(exampleLine("log", [("--cat", "Luna"), ("--weight", "4.2"), ("--activity", "3")]))
+    click.echo(exampleLine("status", []))
+    click.echo(exampleLine("history", [("--cat", "Luna")]))
+    click.echo(exampleLine("graph", [("--cat", "Luna")]))
+    click.echo(exampleLine("overview", [("--cat", "Luna")]))
+    click.echo(exampleLine("delete", [("--mode", "cat"), ("--id", "1")]))
+    click.echo(exampleLine("edit", [("--mode", "log"), ("--id", "5")]))
+    click.echo(exampleLine("export", [("--cat", "Luna"), ("--output", "luna_logs.csv")]))
     click.echo()
     click.echo(click.style("TIP:", bold=True) + " Run any command with --help for more details.")
 
@@ -308,10 +355,13 @@ def graph(cat):
     if weights == []:
         err(f"No weights logged for {cat}.")
         return
-    plt.plot(weights)
+    plt.clear_figure()               # reset state (avoids overlap in interactive mode)
+    plt.theme("clear")               # transparent background (uses terminal bg)
+    plt.plot(weights, color="cyan")  # brighter than blue, visible on black
     plt.xticks(range(len(dates)), dates)
     plt.title(f"{cat}'s Weight Over Time")
     plt.ylabel("kg")
+    plt.ticks_color("white")         # white axis text/labels
     plt.show()
 
 @main.command()

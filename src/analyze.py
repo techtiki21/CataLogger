@@ -1,11 +1,18 @@
 from groq import Groq, AuthenticationError
 from dotenv import load_dotenv
 from datetime import datetime
+from pathlib import Path
 import os
+import sys
 import sql
 import click
 
-load_dotenv()
+# Load .env from next to the executable when frozen (PyInstaller), otherwise
+# fall back to the normal upward search from the current directory.
+if getattr(sys, "frozen", False):
+    load_dotenv(Path(sys.executable).parent / ".env")
+else:
+    load_dotenv()
 
 
 def err(msg):

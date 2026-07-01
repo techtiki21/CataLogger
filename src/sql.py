@@ -50,10 +50,26 @@ def addEntry(name, birth, breed):
         return False
 
 def updateEntry(id, column, value):
-    cursor.execute('''
-        UPDATE cats SET ? = ? WHERE id = ?
-    ''', (column, value, id))
+    allowed = ("name", "birth_date", "breed")
+    if column not in allowed:
+        print("Invalid column.")
+        return False
+    cursor.execute(f'''
+        UPDATE cats SET {column} = ? WHERE id = ?
+    ''', (value, id))
     db.commit()
+    return True
+
+def updateLog(id, column, value):
+    allowed = ("weight_kg", "activity_level", "appetite", "water_intake", "litter", "notes")
+    if column not in allowed:
+        print("Invalid column.")
+        return False
+    cursor.execute(f'''
+        UPDATE log SET {column} = ? WHERE id = ?
+    ''', (value, id))
+    db.commit()
+    return True
 
 def log(id, cat, weight, active, appetite, water, litter, notes):
     cursor.execute('''
